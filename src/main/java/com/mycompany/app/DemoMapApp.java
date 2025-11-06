@@ -17,42 +17,31 @@
 package com.mycompany.app;
 
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
-import com.esri.arcgisruntime.geometry.CoordinateFormatter;
-import com.esri.arcgisruntime.geometry.Point;
-import com.esri.arcgisruntime.geometry.SpatialReferences;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
 import com.esri.arcgisruntime.mapping.BasemapStyle;
 import com.esri.arcgisruntime.mapping.Viewpoint;
-import com.esri.arcgisruntime.mapping.view.Callout;
-import com.esri.arcgisruntime.mapping.view.Graphic;
-import com.esri.arcgisruntime.mapping.view.GraphicsOverlay;
 import com.esri.arcgisruntime.mapping.view.MapView;
-import com.esri.arcgisruntime.symbology.SimpleLineSymbol;
-import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol;
 import javafx.application.Application;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.Cursor;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 
 public class DemoMapApp extends Application {
 
-    private TableView<Location> table;
-    private ObservableList<Location> locations;
-
-    private TextField latitudeField;
-    private TextField longitudeField;
     private MapView mapView;
-    private static final GraphicsOverlay locationGraphics = new GraphicsOverlay();
+    private TextField searchField;
+    private Button schoolTypeBtn;
+    private Button gradeRangeBtn;
+    private VBox leftPanel;
 
 
     public static void main(String[] args) {
@@ -61,16 +50,13 @@ public class DemoMapApp extends Application {
 
     @Override
     public void start(Stage stage) {
-        stage.setTitle("Show Locations on Map App");
+        stage.setTitle("Edmonton School Catchment Zones");
 
-        Scene scene = new Scene(createContent(), 1000, 700);
+        Scene scene = new Scene(createContent(), 1400, 900);
         stage.setScene(scene);
         stage.show();
     }
 
-    /**
-     * Stops and releases all resources used in application.
-     */
     @Override
     public void stop() {
         if (mapView != null) {
@@ -78,160 +64,293 @@ public class DemoMapApp extends Application {
         }
     }
 
-    // Create the application user interface
-    private Parent createContent() {
-        // Title
-        final Label label = new Label("Map Coordinates");
-        label.setFont(new Font("Arial", 16));
-
-        // Create input text, table, and map
-        HBox hBox = createTextInput();
-        createTable();
-        createMap();
-
-        // Put table and map together in an HBox
-        HBox mainView = new HBox(10);
-        mainView.getChildren().addAll(table, mapView);
-        VBox.setVgrow(mainView, Priority.ALWAYS);
-
-        // Put the UI elements into a VBox: title, input text fields, and main view with table and map
-        VBox vBox = new VBox(10);
-        vBox.setPadding(new Insets(10, 10, 10, 10));
-        vBox.getChildren().addAll(label, hBox, mainView);
-
-        return vBox;
-    }
-
-    // Create input text fields and the Add button
-    private HBox createTextInput() {
-        latitudeField = new TextField();
-        latitudeField.setPromptText("Latitude");
-        longitudeField = new TextField();
-        longitudeField.setPromptText("Longitude");
-
-        Button addBtn = new Button("Show");
-        addBtn.setOnAction(event -> {
-            double lat = Double.parseDouble(latitudeField.getText());
-            double lon = Double.parseDouble(longitudeField.getText());
-            Location location = new Location(lat, lon);
-            // Add location to the table and show it on the map
-            locations.add(location);
-            latitudeField.clear();
-            longitudeField.clear();
-            addPoint(lat, lon, locationGraphics, "#00FF00", "#FF0000");
-        });
-
-        // Arrange the text fields and button horizontally
-        HBox hBox = new HBox(10);
-        hBox.getChildren().addAll(latitudeField, longitudeField, addBtn);
-
-        return hBox;
-    }
-
-    // Create a table and configure it
-    private void createTable() {
-        table = new TableView<>();
-        locations = FXCollections.observableArrayList();
-        table.setItems(locations);
-
-        TableColumn<Location, Double> latCol = new TableColumn<>("Latitude");
-        latCol.setCellValueFactory(new PropertyValueFactory<>("latitude"));
-        latCol.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double value, boolean empty) {
-                super.updateItem(value, empty);
-                setText(empty ? "" : Double.toString(value));
-            }
-        });
-        latCol.prefWidthProperty().bind(table.widthProperty().multiply(0.5));
-        table.getColumns().add(latCol);
-
-        TableColumn<Location, Double> lonCol = new TableColumn<>("Longitude");
-        lonCol.setCellValueFactory(new PropertyValueFactory<>("longitude"));
-        lonCol.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double value, boolean empty) {
-                super.updateItem(value, empty);
-                setText(empty ? "" : Double.toString(value));
-            }
-        });
-        lonCol.prefWidthProperty().bind(table.widthProperty().multiply(0.5));
-        table.getColumns().add(lonCol);
-
-        table.setPrefWidth(300);
-
-    }
-
-    // Create a table and configure it
+    // create map
     private void createMap() {
-
-        // Note: it is not best practice to store API keys in source code.
-        // An API key is required to enable access to services, web maps, and web scenes hosted in ArcGIS Online.
-        // If you haven't already, go to your developer dashboard to get your API key.
-        // Please refer to https://developers.arcgis.com/java/get-started/ for more information
-        // String yourApiKey = "YOUR_API_KEY";
         String yourApiKey = "AAPTxy8BH1VEsoebNVZXo8HurAu481bqaz10i09Tq5xdE2fStszJY58xg5MHNHdSainjK_t6FAbSF0O-tK7Jn9NvFdMYwtqpno2RB5lY7QXinjCRTc9b-r0wQDoxzw4vqTKUwtrEv800k6RoVX57pAUZAUMlwbSKxAvo06mUL-09yZHt6RsQ3aI6tKF0s6GxqlxzaXlBo_vlBMaOZrWorKzigQjk6ZLOelnZBtqjpR2zp_M.AT1_oLwo9GUT";
         ArcGISRuntimeEnvironment.setApiKey(yourApiKey);
 
-        // create a MapView to display the map and add it to the stack pane
         mapView = new MapView();
-
-        // create an ArcGISMap with an imagery streets basemap
-        ArcGISMap map = new ArcGISMap(BasemapStyle.ARCGIS_IMAGERY);
-
-        // display the map by setting the map on the map view
-        mapView.setMap(map);
+        ArcGISMap arcgisMapInstance = new ArcGISMap(BasemapStyle.ARCGIS_STREETS);
+        mapView.setMap(arcgisMapInstance);
         mapView.setViewpoint(new Viewpoint(53.53, -113.48, 350000));
-        mapView.getGraphicsOverlays().add(locationGraphics);
-        HBox.setHgrow(mapView, Priority.ALWAYS);
+    }
 
-        // 👇 Add this block to make map clicks add lat/lon in degrees
-        mapView.setOnMouseClicked(event -> {
-            // Convert screen point to map point
-            javafx.geometry.Point2D screenPoint = new javafx.geometry.Point2D(event.getX(), event.getY());
-            Point mapPoint = mapView.screenToLocation(screenPoint);
+    // ui
+    private Parent createContent() {
+        createMap();
 
-            // Project from Web Mercator (map's SR) to WGS84 (degrees)
-            Point wgsPoint = (Point) com.esri.arcgisruntime.geometry.GeometryEngine.project(
-                    mapPoint, SpatialReferences.getWgs84());
+        // main screen
+        StackPane mainRootPane = new StackPane();
+        mainRootPane.getChildren().add(mapView);
 
-            double latitude = wgsPoint.getY();
-            double longitude = wgsPoint.getX();
+        // title at the very top of screen
+        Label mapTitle = new Label("Edmonton School Catchment Zones");
+        mapTitle.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 48));
+        mapTitle.setTextFill(Color.web("#1a5490"));
+        mapTitle.setMouseTransparent(true);
+        StackPane.setAlignment(mapTitle, Pos.TOP_CENTER);
+        StackPane.setMargin(mapTitle, new Insets(20, 0, 0, 0));
+        mainRootPane.getChildren().add(mapTitle);
 
-            // Add to table
-            Location location = new Location(latitude, longitude);
-            locations.add(location);
+        // left panel
+        leftPanel = createLeftPanel();
+        StackPane.setAlignment(leftPanel, Pos.TOP_LEFT);
+        StackPane.setMargin(leftPanel, new Insets(80, 0, 0, 20));
+        mainRootPane.getChildren().add(leftPanel);
 
-            // Add graphic to map
-            addPoint(latitude, longitude, locationGraphics, "#0000FF", "#00FF00");
+        return mainRootPane;
+    }
 
-            // Format coordinates
-            String coordinates = CoordinateFormatter.toLatitudeLongitude(mapPoint, CoordinateFormatter.LatitudeLongitudeFormat.DECIMAL_DEGREES, 4);
+    // create left panel
+    private VBox createLeftPanel() {
+        VBox leftPanelVBox = new VBox(10);
+        leftPanelVBox.setPrefWidth(250);
+        leftPanelVBox.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
 
-            // Get and show a callout
-            Callout callout = mapView.getCallout();
-            callout.setTitle("Clicked Location");
-            callout.setDetail(coordinates);
-            callout.showCalloutAt(mapPoint);
+        // for the search bar
+        searchField = new TextField();
+        searchField.setPromptText("Search");
+        searchField.setPrefWidth(250);
+        searchField.setPrefHeight(40);
+        searchField.setPadding(new Insets(5, 5, 5, 30));
+        searchField.setStyle("" +
+                "-fx-background-color: white; " +
+                "-fx-background-radius: 5; " +
+                "-fx-border-color: #cccccc; " +
+                "-fx-border-radius: 5;");
+
+        // search icon inside search bar
+        StackPane searchContainer = new StackPane();
+        searchContainer.setPrefWidth(250);
+        Label searchIcon = new Label("🔍");
+        searchIcon.setFont(Font.font(16));
+        searchIcon.setMouseTransparent(true);
+        StackPane.setAlignment(searchIcon, Pos.CENTER_LEFT);
+        StackPane.setMargin(searchIcon, new Insets(0, 0, 0, 10));
+        searchContainer.getChildren().addAll(searchField, searchIcon);
+
+        setupSearchField();
+
+        // filter buttons for school type and grade range
+        schoolTypeBtn = createFilterButton("School Type");
+        gradeRangeBtn = createFilterButton("Grade Range");
+
+        setupSchoolTypeFilter(schoolTypeBtn);
+        setupGradeRangeFilter(gradeRangeBtn);
+
+        leftPanelVBox.getChildren().addAll(searchContainer, schoolTypeBtn, gradeRangeBtn);
+        leftPanelVBox.setPadding(new Insets(10));
+
+        return leftPanelVBox;
+    }
+    
+    private void setupSearchField() {
+        searchField.textProperty().addListener((textObservable, previousTextValue, currentTextValue) -> {
+            if (!currentTextValue.isEmpty() && currentTextValue.length() >= 3) {
+                showSearchFillSuggestions(currentTextValue);
+            }
         });
+        
+        // handling search when user presses Enter on keyboard
+        searchField.setOnAction(searchActionEvent -> {
+            String searchQuery = searchField.getText();
+            if (!searchQuery.isEmpty()) {
+                performSearch(searchQuery);
+            }
+        });
+    }
 
+    // search suggestions
+    private void showSearchFillSuggestions(String searchFillQuery) {
+        // backend to fetch search suggestions (if possible)
+    }
+
+    // filter button
+    private Button createFilterButton(String text) {
+        Button filterButtonInstance = new Button();
+        filterButtonInstance.setPrefWidth(250);
+        filterButtonInstance.setPrefHeight(40);
+        filterButtonInstance.setAlignment(Pos.CENTER_LEFT);
+        filterButtonInstance.setStyle("" +
+                "-fx-background-color: #1a5490; " +
+                "-fx-background-radius: 20;");
+
+        // content with plus icon
+        HBox buttonContentHBox = new HBox(10);
+        buttonContentHBox.setAlignment(Pos.CENTER_LEFT);
+        
+        // "+" icon container
+        StackPane filterPlusContainer = new StackPane();
+        filterPlusContainer.setPrefWidth(24);
+        filterPlusContainer.setPrefHeight(24);
+        filterPlusContainer.setStyle("" +
+                "-fx-background-color: #7fb8d8; " +
+                "-fx-background-radius: 6;");
+        
+        Label filterPlusIcon = new Label("+");
+        filterPlusIcon.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        filterPlusIcon.setTextFill(Color.WHITE);
+        filterPlusContainer.getChildren().add(filterPlusIcon);
+        
+        // label
+        Label filterButtonLabel = new Label(text);
+        filterButtonLabel.setTextFill(Color.WHITE);
+        filterButtonLabel.setFont(Font.font("Arial", 14));
+        
+        buttonContentHBox.getChildren().addAll(filterPlusContainer, filterButtonLabel);
+        buttonContentHBox.setPadding(new Insets(0, 0, 0, 8)); // Left indent
+        
+        filterButtonInstance.setGraphic(buttonContentHBox);
+        filterButtonInstance.setContentDisplay(ContentDisplay.LEFT);
+
+        return filterButtonInstance;
+    }
+
+    // school type filter
+    private void setupSchoolTypeFilter(Button filterButtonParam) {
+        filterButtonParam.setOnAction(schoolTypeActionEvent -> {
+            Popup schoolTypePopup = createCustomMenu("School Type", new String[]{"Elementary", "Junior High", "High School"}, schoolTypeBtn);
+            schoolTypePopup.show(filterButtonParam, 
+                filterButtonParam.localToScreen(0, 0).getX(),
+                filterButtonParam.localToScreen(0, filterButtonParam.getHeight()).getY());
+        });
+    }
+
+    // grade range filter
+    private void setupGradeRangeFilter(Button filterButtonParam) {
+        filterButtonParam.setOnAction(gradeRangeActionEvent -> {
+            Popup gradeRangePopup = createCustomMenu("Grade Range", new String[]{"K-6", "Grades 7-9", "Grades 10-12"}, gradeRangeBtn);
+            gradeRangePopup.show(filterButtonParam, 
+                filterButtonParam.localToScreen(0, 0).getX(),
+                filterButtonParam.localToScreen(0, filterButtonParam.getHeight()).getY());
+        });
+    }
+
+    // custom menu dropdown for the filters
+    private Popup createCustomMenu(String title, String[] items, Button filterButton) {
+        Popup filterMenuPopup = new Popup();
+        filterMenuPopup.setAutoHide(true);
+        
+        VBox menuContainerVBox = new VBox(0);
+        menuContainerVBox.setStyle("" +
+                "-fx-background-color: white; " +
+                "-fx-background-radius: 10; " +
+                "-fx-border-color: #cccccc; " +
+                "-fx-border-radius: 10; " +
+                "-fx-border-width: 1;");
+        menuContainerVBox.setPrefWidth(250);
+        menuContainerVBox.setPadding(new Insets(12, 0, 12, 0));
+        
+        // header
+        Label menuHeaderLabel = new Label(title);
+        menuHeaderLabel.setTextFill(Color.web("#1a5490"));
+        menuHeaderLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        menuHeaderLabel.setPadding(new Insets(0, 0, 8, 16));
+        menuContainerVBox.getChildren().add(menuHeaderLabel);
+        
+        // separator
+        Separator menuSeparator = new Separator();
+        menuSeparator.setPadding(new Insets(0, 12, 8, 12));
+        menuContainerVBox.getChildren().add(menuSeparator);
+        
+        // for each menu item
+        for (String menuItemText : items) {
+            HBox menuItemHBox = new HBox(10);
+            menuItemHBox.setAlignment(Pos.CENTER_LEFT);
+            menuItemHBox.setPadding(new Insets(8, 16, 8, 16));
+            menuItemHBox.setCursor(Cursor.HAND);
+            
+            // container
+            StackPane menuPlusContainer = new StackPane();
+            menuPlusContainer.setPrefWidth(20);
+            menuPlusContainer.setPrefHeight(20);
+            menuPlusContainer.setStyle("" +
+                    "-fx-background-color: #7fb8d8; " +
+                    "-fx-background-radius: 4;");
+            
+            Label menuPlusIcon = new Label("+");
+            menuPlusIcon.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            menuPlusIcon.setTextFill(Color.WHITE);
+            menuPlusContainer.getChildren().add(menuPlusIcon);
+            
+            // text
+            Label menuItemLabel = new Label(menuItemText);
+            menuItemLabel.setTextFill(Color.web("#7fb8d8"));
+            menuItemLabel.setFont(Font.font("Arial", 14));
+            
+            menuItemHBox.getChildren().addAll(menuPlusContainer, menuItemLabel);
+            
+            // when a filter is clicked
+            menuItemHBox.setOnMouseClicked(menuItemClickEvent -> {
+                addFilterTag(menuItemText, "#FF8C00", filterButton);
+                applyFilterToBackend(filterButton.getText(), menuItemText);
+                filterMenuPopup.hide();
+            });
+            
+            // hover effect when mouse cursor is on a filter option for school and grade
+            menuItemHBox.setOnMouseEntered(hoverEnterEvent -> menuItemHBox.setStyle("-fx-background-color: #f0f0f0;"));
+            menuItemHBox.setOnMouseExited(hoverExitEvent -> menuItemHBox.setStyle("-fx-background-color: transparent;"));
+            
+            menuContainerVBox.getChildren().add(menuItemHBox);
+        }
+        
+        filterMenuPopup.getContent().add(menuContainerVBox);
+        return filterMenuPopup;
+    }
+    
+    // filter tag
+    private void addFilterTag(String tagText, String color, Button filterButton) {
+        // pane
+        Pane filterTagPane = new Pane();
+        filterTagPane.setPrefWidth(250);
+        filterTagPane.setPrefHeight(40);
+        filterTagPane.setStyle("" +
+                "-fx-background-color: " + color + "; " +
+                "-fx-background-radius: 20;");
+        
+        // text
+        Label filterTagLabel = new Label(tagText);
+        filterTagLabel.setTextFill(Color.WHITE);
+        filterTagLabel.setFont(Font.font("Arial", 14));
+        filterTagPane.getChildren().add(filterTagLabel);
+        filterTagLabel.layoutXProperty().bind(filterTagPane.widthProperty().divide(2).subtract(filterTagLabel.widthProperty().divide(2)));
+        filterTagLabel.layoutYProperty().bind(filterTagPane.heightProperty().divide(2).subtract(filterTagLabel.heightProperty().divide(2)));
+        
+        // close
+        Label filterCloseButton = new Label("×");
+        filterCloseButton.setTextFill(Color.WHITE);
+        filterCloseButton.setFont(Font.font(16));
+        filterCloseButton.setCursor(Cursor.HAND);
+        filterCloseButton.setOnMouseClicked(closeClickEvent -> {
+            removeFilterFromBackend(filterButton.getText(), tagText);
+            ((VBox) filterTagPane.getParent()).getChildren().remove(filterTagPane);
+        });
+        filterTagPane.getChildren().add(filterCloseButton);
+        filterCloseButton.layoutXProperty().bind(filterTagPane.widthProperty().subtract(24));
+        filterCloseButton.layoutYProperty().bind(filterTagPane.heightProperty().divide(2).subtract(filterCloseButton.heightProperty().divide(2)));
+        
+        // insert
+        VBox parentVBox = (VBox) filterButton.getParent();
+        int filterButtonIndex = parentVBox.getChildren().indexOf(filterButton);
+        parentVBox.getChildren().add(filterButtonIndex + 1, filterTagPane);
     }
 
 
-    private static void addPoint(double lat, double lon, GraphicsOverlay graphicsOverlay, String fill, String line) {
-        // create a point geometry with a location and spatial reference
-        Point point = new Point(lon, lat, SpatialReferences.getWgs84());
-        // create an opaque orange point symbol with a opaque blue outline symbol
-        SimpleMarkerSymbol simpleMarkerSymbol =
-                new SimpleMarkerSymbol(SimpleMarkerSymbol.Style.CIRCLE, Color.valueOf(fill), 10);
-        SimpleLineSymbol blueOutlineSymbol =
-                new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.valueOf(line), 2);
-
-        simpleMarkerSymbol.setOutline(blueOutlineSymbol);
-
-        // create a graphic with the point geometry and symbol
-        Graphic pointGraphic = new Graphic(point, simpleMarkerSymbol);
-
-        graphicsOverlay.getGraphics().add(pointGraphic);
+    // backend fetching for user actions
+    
+    // searching
+    private void performSearch(String searchQuery) {
     }
+    
+    // filter
+    private void applyFilterToBackend(String filterType, String filterValue) {
+    }
+    
+    // remove filter
+    private void removeFilterFromBackend(String filterType, String filterValue) {
+    }
+
 }
+
+
+
