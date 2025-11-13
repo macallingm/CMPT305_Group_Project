@@ -99,13 +99,13 @@ public class PublicSchools {
     }
 
     // method to get list of schools matching school type
-    public PublicSchools getBySchoolType(String schoolType) {
+    public List<PublicSchool> getBySchoolType(String schoolType) {
         List<PublicSchool> typeSchools = new ArrayList<>();
         for (PublicSchool publicSchool : publicSchools) {
             if (publicSchool.getSchoolType().equalsIgnoreCase(schoolType)) {
                 typeSchools.add(publicSchool);
             }
         }
-        return new PublicSchools(typeSchools);
+        return typeSchools;
     }
 }
