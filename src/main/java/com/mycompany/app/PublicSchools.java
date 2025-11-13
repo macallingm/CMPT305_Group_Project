@@ -89,6 +89,15 @@ public class PublicSchools {
         return tokens.toArray(new String[0]);
     }
 
+    public PublicSchool getWithSchoolID(int schoolID) {
+        for (PublicSchool school : publicSchools) {
+            if (school.getSchoolID() == schoolID) {
+                return school;
+            }
+        }
+        return null;
+    }
+
     // method to get list of schools matching school type
     public PublicSchools getBySchoolType(String schoolType) {
         List<PublicSchool> typeSchools = new ArrayList<>();
