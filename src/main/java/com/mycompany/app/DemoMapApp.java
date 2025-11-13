@@ -20,6 +20,7 @@ import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
 import com.esri.arcgisruntime.mapping.ArcGISMap;
 import com.esri.arcgisruntime.mapping.BasemapStyle;
 import com.esri.arcgisruntime.mapping.Viewpoint;
+import com.esri.arcgisruntime.mapping.view.GraphicsOverlay;
 import com.esri.arcgisruntime.mapping.view.MapView;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -35,12 +36,20 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 
+import com.esri.arcgisruntime.geometry.Point;
+import com.esri.arcgisruntime.geometry.SpatialReferences;
+import com.esri.arcgisruntime.mapping.view.Graphic;
+import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol;
+import java.util.ArrayList;
+import java.util.List;
+
 public class DemoMapApp extends Application {
 
     private MapView mapView;
     private TextField searchField;
     private Button schoolTypeBtn;
     private VBox leftPanel;
+    private GraphicsOverlay polyGraphic = new GraphicsOverlay();
 
 
     public static void main(String[] args) {
@@ -72,6 +81,52 @@ public class DemoMapApp extends Application {
         ArcGISMap arcgisMapInstance = new ArcGISMap(BasemapStyle.ARCGIS_STREETS);
         mapView.setMap(arcgisMapInstance);
         mapView.setViewpoint(new Viewpoint(53.53, -113.48, 350000));
+        mapView.getGraphicsOverlays().add(polyGraphic);
+
+//        //Test
+//        List<Point> pointList = new ArrayList<Point>();
+//        pointList.add(new Point(-113.4919821730823, 53.59206680630691));
+//        pointList.add(new Point(-113.49642967885222, 53.592036334095425));
+//        pointList.add(new Point(-113.51653145749275, 53.59213365593257));
+//        pointList.add(new Point(-113.51671688693469, 53.599509080219796));
+//        pointList.add(new Point(-113.5027165990472, 53.59950518805787));
+//        pointList.add(new Point(-113.49198198933009, 53.59948068826978));
+//        pointList.add(new Point(-113.4919821730823, 53.59206680630691));
+
+
+        String grade = "EL";
+        //pointList is related to catchment area polygon points
+        DrawPolygon polygon = new DrawPolygon(polyGraphic, pointList, grade);
+
+        mapView.setOnMouseClicked(event -> {
+            // Convert screen point to map point
+            javafx.geometry.Point2D screenPoint = new javafx.geometry.Point2D(event.getX(), event.getY());
+            Point mapPoint = mapView.screenToLocation(screenPoint);
+
+            // Project from Web Mercator (map's SR) to WGS84 (degrees)
+            Point wgsPoint = (Point) com.esri.arcgisruntime.geometry.GeometryEngine.project(
+                    mapPoint, SpatialReferences.getWgs84());
+
+            double latitude = wgsPoint.getY();
+            double longitude = wgsPoint.getX();
+            boolean isIn = polygon.inPolygon(longitude, latitude);
+            if (isIn) {
+                System.out.println("True");
+            }
+            else {
+                System.out.println("False");
+            }
+        });
+    }
+
+    private static void createPoints(double lat,  double lon, GraphicsOverlay graphicsOverlay) {
+
+        // create a red circle simple marker symbol
+        SimpleMarkerSymbol redCircleSymbol = new SimpleMarkerSymbol(SimpleMarkerSymbol.Style.CIRCLE, Color.RED, 10);
+
+        // create graphics and add to graphics overlay
+        Graphic graphic = new Graphic(new Point(lon,lat, SpatialReferences.getWgs84()), redCircleSymbol);
+        graphicsOverlay.getGraphics().add(graphic);
     }
 
     // ui
