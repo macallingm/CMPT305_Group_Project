@@ -2,6 +2,7 @@ package com.mycompany.app;
 
 import java.util.List;
 import java.util.Objects;
+import com.esri.arcgisruntime.geometry.Point;
 
 public class PublicSchool {
     private final int schoolID;
@@ -9,11 +10,11 @@ public class PublicSchool {
     private final String schoolType;
     private final String grades;
     private final String address;
-    private final Location location;
-    private final List<Location> catchmentArea;
+    private final Point location;
+    private final List<Point> catchmentArea;
 
     public PublicSchool(int schoolID, String schoolName,  String schoolType, String grades, String address,
-                        Location location, List<Location> catchmentArea) {
+                        Point location, List<Point> catchmentArea) {
         this.schoolID = schoolID;
         this.schoolName = schoolName;
         this.schoolType = schoolType;
@@ -43,11 +44,11 @@ public class PublicSchool {
         return address;
     }
 
-    public Location getLocation() {
+    public Point getLocation() {
         return location;
     }
 
-    public List<Location> getCatchmentArea() {
+    public List<Point> getCatchmentArea() {
         return catchmentArea;
     }
 
