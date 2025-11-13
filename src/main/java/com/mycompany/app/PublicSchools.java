@@ -37,9 +37,7 @@ public class PublicSchools {
                     String[] points = multipolygon.split(",");
 
                     for (String point : points) {
-                        System.out.println(point);
                         String[] pointValues = point.stripLeading().split(" ");
-                        System.out.println(pointValues.length);
                         catchmentPoint = new Point(Double.parseDouble(pointValues[0]),
                                 Double.parseDouble(pointValues[1]));
                         catchmentArea.add(catchmentPoint);
@@ -49,8 +47,10 @@ public class PublicSchools {
                 PublicSchool school = new PublicSchool(Integer.parseInt(values[4]), values[5], values[6], values[7],
                         values[8], location, catchmentArea);
 
-                System.out.print(school);
+                publicSchools.add(school);
             }
+
+            this.publicSchools = publicSchools;
         }
     }
 
