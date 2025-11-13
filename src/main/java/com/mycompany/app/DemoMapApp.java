@@ -40,7 +40,6 @@ public class DemoMapApp extends Application {
     private MapView mapView;
     private TextField searchField;
     private Button schoolTypeBtn;
-    private Button gradeRangeBtn;
     private VBox leftPanel;
 
 
@@ -131,14 +130,12 @@ public class DemoMapApp extends Application {
 
         setupSearchField();
 
-        // filter buttons for school type and grade range
+        // filter button for school type
         schoolTypeBtn = createFilterButton("School Type");
-        gradeRangeBtn = createFilterButton("Grade Range");
 
         setupSchoolTypeFilter(schoolTypeBtn);
-        setupGradeRangeFilter(gradeRangeBtn);
 
-        leftPanelVBox.getChildren().addAll(searchContainer, schoolTypeBtn, gradeRangeBtn);
+        leftPanelVBox.getChildren().addAll(searchContainer, schoolTypeBtn);
         leftPanelVBox.setPadding(new Insets(10));
 
         return leftPanelVBox;
@@ -216,16 +213,6 @@ public class DemoMapApp extends Application {
         });
     }
 
-    // grade range filter
-    private void setupGradeRangeFilter(Button filterButtonParam) {
-        filterButtonParam.setOnAction(gradeRangeActionEvent -> {
-            Popup gradeRangePopup = createCustomMenu("Grade Range", new String[]{"K-6", "Grades 7-9", "Grades 10-12"}, gradeRangeBtn);
-            gradeRangePopup.show(filterButtonParam, 
-                filterButtonParam.localToScreen(0, 0).getX(),
-                filterButtonParam.localToScreen(0, filterButtonParam.getHeight()).getY());
-        });
-    }
-
     // custom menu dropdown for the filters
     private Popup createCustomMenu(String title, String[] items, Button filterButton) {
         Popup filterMenuPopup = new Popup();
@@ -287,7 +274,7 @@ public class DemoMapApp extends Application {
                 filterMenuPopup.hide();
             });
             
-            // hover effect when mouse cursor is on a filter option for school and grade
+            // hover effect when mouse cursor is on a filter option
             menuItemHBox.setOnMouseEntered(hoverEnterEvent -> menuItemHBox.setStyle("-fx-background-color: #f0f0f0;"));
             menuItemHBox.setOnMouseExited(hoverExitEvent -> menuItemHBox.setStyle("-fx-background-color: transparent;"));
             
