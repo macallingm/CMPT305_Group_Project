@@ -40,6 +40,8 @@ import com.esri.arcgisruntime.geometry.Point;
 import com.esri.arcgisruntime.geometry.SpatialReferences;
 import com.esri.arcgisruntime.mapping.view.Graphic;
 import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,20 +85,31 @@ public class DemoMapApp extends Application {
         mapView.setViewpoint(new Viewpoint(53.53, -113.48, 350000));
         mapView.getGraphicsOverlays().add(polyGraphic);
 
-//        //Test
-//        List<Point> pointList = new ArrayList<Point>();
-//        pointList.add(new Point(-113.4919821730823, 53.59206680630691));
-//        pointList.add(new Point(-113.49642967885222, 53.592036334095425));
-//        pointList.add(new Point(-113.51653145749275, 53.59213365593257));
-//        pointList.add(new Point(-113.51671688693469, 53.599509080219796));
-//        pointList.add(new Point(-113.5027165990472, 53.59950518805787));
-//        pointList.add(new Point(-113.49198198933009, 53.59948068826978));
-//        pointList.add(new Point(-113.4919821730823, 53.59206680630691));
+        //Test
+        List<Point> pointList = new ArrayList<Point>();
+        pointList.add(new Point(-113.4919821730823, 53.59206680630691));
+        pointList.add(new Point(-113.49642967885222, 53.592036334095425));
+        pointList.add(new Point(-113.51653145749275, 53.59213365593257));
+        pointList.add(new Point(-113.51671688693469, 53.599509080219796));
+        pointList.add(new Point(-113.5027165990472, 53.59950518805787));
+        pointList.add(new Point(-113.49198198933009, 53.59948068826978));
+        pointList.add(new Point(-113.4919821730823, 53.59206680630691));
 
+        PublicSchools publicSchools = null;
+        try {
+            publicSchools = new PublicSchools("Edmonton_Public_School_Board_2025_Small.csv");
+        } catch (IOException e) {
+            System.err.println("Error: can't open file");
+            return;
+        }
 
-        String grade = "EL";
+        PublicSchool griesbach = publicSchools.getWithSchoolID(575);
+        PublicSchool school2 = publicSchools.getWithSchoolID(59);
+
+        String grade = "EJ";
         //pointList is related to catchment area polygon points
-        DrawPolygon polygon = new DrawPolygon(polyGraphic, pointList, grade);
+        DrawPolygon polygon = new DrawPolygon(polyGraphic, griesbach.getCatchmentArea(), grade);
+        DrawPolygon polygon2 = new DrawPolygon(polyGraphic, school2.getCatchmentArea(), "SR");
 
         mapView.setOnMouseClicked(event -> {
             // Convert screen point to map point
