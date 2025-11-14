@@ -52,6 +52,7 @@ public class DemoMapApp extends Application {
     private Button schoolTypeBtn;
     private VBox leftPanel;
     private GraphicsOverlay polyGraphic = new GraphicsOverlay();
+    private List<DrawPolygon> polygons = new ArrayList<>();
 
 
     public static void main(String[] args) {
@@ -110,6 +111,10 @@ public class DemoMapApp extends Application {
         //pointList is related to catchment area polygon points
         DrawPolygon polygon = new DrawPolygon(polyGraphic, griesbach.getCatchmentArea(), grade);
         DrawPolygon polygon2 = new DrawPolygon(polyGraphic, school2.getCatchmentArea(), "SR");
+        
+        // Add thepolygons
+        polygons.add(polygon);
+        polygons.add(polygon2);
 
         mapView.setOnMouseClicked(event -> {
             // Convert screen point to map point
@@ -122,7 +127,16 @@ public class DemoMapApp extends Application {
 
             double latitude = wgsPoint.getY();
             double longitude = wgsPoint.getX();
-            boolean isIn = polygon.inPolygon(longitude, latitude);
+            
+            // Check all polygons
+            boolean isIn = false;
+            for (DrawPolygon poly : polygons) {
+                if (poly.inPolygon(longitude, latitude)) {
+                    isIn = true;
+                    break;
+                }
+            }
+            
             if (isIn) {
                 System.out.println("True");
             }
