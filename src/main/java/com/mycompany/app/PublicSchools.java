@@ -108,4 +108,9 @@ public class PublicSchools {
         }
         return typeSchools;
     }
+
+    // method to get all schools
+    public List<PublicSchool> getAllSchools() {
+        return new ArrayList<>(publicSchools);
+    }
 }
