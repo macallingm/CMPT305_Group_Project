@@ -371,7 +371,6 @@ public class DemoMapApp extends Application {
             menuItemHBox.setOnMouseClicked(menuItemClickEvent -> {
                 addFilterTag(menuItemText, "#FF8C00", filterButton);
                 applyFilterToBackend(publicSchools, menuItemText, polyGraphic, polygons);
-                // ADD THAT LINE BACK ONCE METHOD TO DRAW POLYGONS IS READY!!
                 filterMenuPopup.hide();
             });
             
@@ -410,7 +409,7 @@ public class DemoMapApp extends Application {
         filterCloseButton.setFont(Font.font(16));
         filterCloseButton.setCursor(Cursor.HAND);
         filterCloseButton.setOnMouseClicked(closeClickEvent -> {
-            removeFilterFromBackend(filterButton.getText(), tagText);
+            removeFilterFromBackend(publicSchools, tagText, polyGraphic, polygons);
             ((VBox) filterTagPane.getParent()).getChildren().remove(filterTagPane);
         });
         filterTagPane.getChildren().add(filterCloseButton);
@@ -471,7 +470,43 @@ public class DemoMapApp extends Application {
     }
     
     // remove filter
-    private void removeFilterFromBackend(String filterType, String filterValue) {
+    private void removeFilterFromBackend(PublicSchools publicSchools, String schoolType, GraphicsOverlay polyGraphic, List<DrawPolygon> polygons) {
+        String abbrevType = "";
+
+        switch(schoolType) {
+            case "Elementary":
+                abbrevType = "EL";
+                break;
+            case "Junior High":
+                abbrevType = "JR";
+                break;
+            case "High School":
+                abbrevType = "SR";
+                break;
+            case "Elementary + Junior High":
+                abbrevType = "EJ";
+                break;
+            case "Junior High + High School":
+                abbrevType = "JS";
+                break;
+            case "All Grades":
+                abbrevType = "EJS";
+                break;
+            case "Specialized Programming":
+                abbrevType = "SP";
+                break;
+            default:
+                break;
+        }
+
+        if (!abbrevType.isEmpty()) {
+            for (DrawPolygon polygon : polygons) {
+                // undraw polygon for that type
+//                int index = polygons.indexOf(new DrawPolygon(polyGraphic, school.getCatchmentArea(), abbrevType));
+//                polygons.get(index).removeGraphic();
+                polyGraphic.getGraphics().clear(); // THIS CLEARS ALL NOT JUST CLICKED FILTER
+            }
+        }
     }
 
 }

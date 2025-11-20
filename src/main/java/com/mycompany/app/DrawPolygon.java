@@ -64,4 +64,8 @@ public class DrawPolygon{
         }
         return (count%2 == 1);
     }
+
+    public void removeGraphic(){
+        graphicsOverlay.getGraphics().remove(polygonGraphic);
+    }
 }
