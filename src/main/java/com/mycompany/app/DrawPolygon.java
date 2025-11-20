@@ -33,13 +33,16 @@ public class DrawPolygon{
 
         if(gradeLevel.equals("EL")){
             polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF8000",0.4), null);
-
         } else if (gradeLevel.equals("EJ")) {
             polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x00FF80",0.4), null);
         } else if (gradeLevel.equals("JR")) {
             polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x0000FF",0.4), null);
         } else if (gradeLevel.equals("JS")) {
             polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF0000",0.4), null);
+        } else if (gradeLevel.equals("SR")) {
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x800020",0.4), null);
+        } else if (gradeLevel.equals("EJS")) {
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("8a00c2",0.4), null);
         }
         else {
             polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF007F",0.4), null);
