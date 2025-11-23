@@ -146,15 +146,25 @@ public class DemoMapApp extends Application {
             
             // Check all polygons
             boolean isIn = false;
+            DrawPolygon selectedPolygon = null;
             for (DrawPolygon poly : polygons) {
                 if (poly.inPolygon(longitude, latitude)) {
                     isIn = true;
+                    selectedPolygon = poly;
                     break;
                 }
             }
             
             if (isIn) {
                 System.out.println("True");
+                try {
+                    PropertyAssessments propertyAssessments = new PropertyAssessments("Property_Assessment_Data_2025.csv");
+                    CatchmentProperties props = new CatchmentProperties(propertyAssessments,selectedPolygon);
+                    props.getCatchmentProperties();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
             }
             else {
                 System.out.println("False");
