@@ -500,12 +500,17 @@ public class DemoMapApp extends Application {
         }
 
         if (!abbrevType.isEmpty()) {
+            List<DrawPolygon> polygonsToRemove = new ArrayList<>();
+            
+
             for (DrawPolygon polygon : polygons) {
-                // undraw polygon for that type
-//                int index = polygons.indexOf(new DrawPolygon(polyGraphic, school.getCatchmentArea(), abbrevType));
-//                polygons.get(index).removeGraphic();
-                polyGraphic.getGraphics().clear(); // THIS CLEARS ALL NOT JUST CLICKED FILTER
+                if (polygon.getGradeLevel().equals(abbrevType)) {
+                    polygon.removeGraphic();
+                    polygonsToRemove.add(polygon);
+                }
             }
+
+            polygons.removeAll(polygonsToRemove);
         }
     }
 

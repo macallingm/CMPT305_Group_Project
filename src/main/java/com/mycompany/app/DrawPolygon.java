@@ -19,11 +19,13 @@ public class DrawPolygon{
     SimpleFillSymbol polygonFill;
     Graphic polygonGraphic;
     List<Point> pointList;
+    String gradeLevel;
 
 
     public DrawPolygon( GraphicsOverlay graphicsOverlay, List<Point> pointList, String gradeLevel) {
         this.pointList = pointList;
         this.graphicsOverlay = graphicsOverlay;
+        this.gradeLevel = gradeLevel;
         testCollection = new PointCollection(SpatialReferences.getWgs84());
         for  (Point point : pointList) {
             testCollection.add(point);
@@ -67,5 +69,9 @@ public class DrawPolygon{
 
     public void removeGraphic(){
         graphicsOverlay.getGraphics().remove(polygonGraphic);
+    }
+    
+    public String getGradeLevel(){
+        return gradeLevel;
     }
 }
