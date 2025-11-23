@@ -58,6 +58,8 @@ public class DemoMapApp extends Application {
 
     private List<DrawPolygon> polygons = new ArrayList<>();
     private PublicSchools  publicSchools = null;
+    private PropertyAssessments propertyAssessments = null;
+    private String filename= "Property_Assessment_Data_2025.csv";
 
 
     public static void main(String[] args) {
@@ -102,6 +104,13 @@ public class DemoMapApp extends Application {
             return;
         }
 
+        try {
+            propertyAssessments = new PropertyAssessments(filename);
+        } catch (IOException e) {
+            System.err.println("Error: can't open file " + filename);
+            return;
+        }
+
         // Draw points for all schools
         for (PublicSchool school : publicSchools.getAllSchools()) {
             Point location = school.getLocation();
@@ -135,14 +144,8 @@ public class DemoMapApp extends Application {
             
             if (isIn) {
                 System.out.println("True");
-                try {
-                    PropertyAssessments propertyAssessments = new PropertyAssessments("Property_Assessment_Data_2025.csv");
-                    CatchmentProperties props = new CatchmentProperties(propertyAssessments,selectedPolygon);
-                    props.getCatchmentProperties();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
+                CatchmentProperties props = new CatchmentProperties(propertyAssessments,selectedPolygon);
+                props.getCatchmentProperties();
             }
             else {
                 System.out.println("False");

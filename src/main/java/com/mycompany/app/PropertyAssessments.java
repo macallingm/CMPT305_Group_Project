@@ -56,7 +56,6 @@ public class PropertyAssessments {
             }
 
             this.propertyAssessments = propertyAssessments;
-            System.out.println("Here2");
         }
     }
 
