@@ -106,7 +106,7 @@ public class DemoMapApp extends Application {
             return;
         }
 
-        // draw points for all schools
+        // Draw points for all schools
         for (PublicSchool school : publicSchools.getAllSchools()) {
             Point location = school.getLocation();
             if (location != null) {
