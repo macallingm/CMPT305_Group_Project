@@ -7,6 +7,7 @@ import com.esri.arcgisruntime.geometry.SpatialReferences;
 import com.esri.arcgisruntime.mapping.view.Graphic;
 import com.esri.arcgisruntime.mapping.view.GraphicsOverlay;
 import com.esri.arcgisruntime.symbology.SimpleFillSymbol;
+import com.esri.arcgisruntime.symbology.SimpleLineSymbol;
 import javafx.scene.paint.Color;
 import java.util.List;
 
@@ -32,22 +33,30 @@ public class DrawPolygon{
         }
 
         testPolygon = new Polygon(testCollection);
+        float borderWidth = 3.0F;
 
         if(gradeLevel.equals("EL")){
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF8000",0.4), null);
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF8000",0.4),
+                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A35200",0.4), borderWidth));
         } else if (gradeLevel.equals("EJ")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x00FF80",0.4), null);
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x00FF80",0.4),
+                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("00A352",0.4), borderWidth));
         } else if (gradeLevel.equals("JR")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x0000FF",0.4), null);
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x0000FF",0.4),
+                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("0000A3",0.4), borderWidth));
         } else if (gradeLevel.equals("JS")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF0000",0.4), null);
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF0000",0.4),
+                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A30000",0.4), borderWidth));
         } else if (gradeLevel.equals("SR")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x800020",0.4), null);
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF007F",0.4),
+                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A30052",0.4), borderWidth));
         } else if (gradeLevel.equals("EJS")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("8a00c2",0.4), null);
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("8a00c2",0.4),
+                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("58007C",0.4), borderWidth));
         }
         else {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF007F",0.4), null);
+            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("FFEA00",0.4),
+                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("CCBB00",0.4), borderWidth));
         }
         //See https://developers.arcgis.com/java/maps-2d/tutorials/add-a-point-line-and-polygon/
 
