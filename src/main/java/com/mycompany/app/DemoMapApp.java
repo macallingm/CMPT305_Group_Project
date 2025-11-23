@@ -57,6 +57,7 @@ public class DemoMapApp extends Application {
     private GraphicsOverlay schoolPointsGraphic = new GraphicsOverlay();
 
     private List<DrawPolygon> polygons = new ArrayList<>();
+    private PublicSchools  publicSchools = null;
 
 
     public static void main(String[] args) {
@@ -94,35 +95,12 @@ public class DemoMapApp extends Application {
         // hide pts
         schoolPointsGraphic.setVisible(false);
 
-        //Test
-        List<Point> pointList = new ArrayList<Point>();
-        pointList.add(new Point(-113.4919821730823, 53.59206680630691));
-        pointList.add(new Point(-113.49642967885222, 53.592036334095425));
-        pointList.add(new Point(-113.51653145749275, 53.59213365593257));
-        pointList.add(new Point(-113.51671688693469, 53.599509080219796));
-        pointList.add(new Point(-113.5027165990472, 53.59950518805787));
-        pointList.add(new Point(-113.49198198933009, 53.59948068826978));
-        pointList.add(new Point(-113.4919821730823, 53.59206680630691));
-
-        PublicSchools publicSchools = null;
         try {
             publicSchools = new PublicSchools("Edmonton_Public_School_Board_2025_Small.csv");
         } catch (IOException e) {
             System.err.println("Error: can't open file");
             return;
         }
-
-        PublicSchool griesbach = publicSchools.getWithSchoolID(575);
-        PublicSchool school2 = publicSchools.getWithSchoolID(59);
-
-        String grade = "EJ";
-        //pointList is related to catchment area polygon points
-        DrawPolygon polygon = new DrawPolygon(polyGraphic, griesbach.getCatchmentArea(), grade);
-        DrawPolygon polygon2 = new DrawPolygon(polyGraphic, school2.getCatchmentArea(), "SR");
-        
-        // Add thepolygons
-        polygons.add(polygon);
-        polygons.add(polygon2);
 
         // Draw points for all schools
         for (PublicSchool school : publicSchools.getAllSchools()) {
@@ -328,7 +306,9 @@ public class DemoMapApp extends Application {
     // school type filter
     private void setupSchoolTypeFilter(Button filterButtonParam) {
         filterButtonParam.setOnAction(schoolTypeActionEvent -> {
-            Popup schoolTypePopup = createCustomMenu("School Type", new String[]{"Elementary", "Junior High", "High School"}, schoolTypeBtn);
+            Popup schoolTypePopup = createCustomMenu("School Type", new String[]{"Elementary", "Junior High",
+                    "High School", "Elementary + Junior High", "Junior High + High School", "All Grades",
+                    "Specialized Programming"}, schoolTypeBtn);
             schoolTypePopup.show(filterButtonParam, 
                 filterButtonParam.localToScreen(0, 0).getX(),
                 filterButtonParam.localToScreen(0, filterButtonParam.getHeight()).getY());
@@ -400,7 +380,7 @@ public class DemoMapApp extends Application {
             // when a filter is clicked
             menuItemHBox.setOnMouseClicked(menuItemClickEvent -> {
                 addFilterTag(menuItemText, "#FF8C00", filterButton);
-                applyFilterToBackend(filterButton.getText(), menuItemText);
+                applyFilterToBackend(publicSchools, menuItemText, polyGraphic, polygons);
                 filterMenuPopup.hide();
             });
             
@@ -439,7 +419,7 @@ public class DemoMapApp extends Application {
         filterCloseButton.setFont(Font.font(16));
         filterCloseButton.setCursor(Cursor.HAND);
         filterCloseButton.setOnMouseClicked(closeClickEvent -> {
-            removeFilterFromBackend(filterButton.getText(), tagText);
+            removeFilterFromBackend(publicSchools, tagText, polyGraphic, polygons);
             ((VBox) filterTagPane.getParent()).getChildren().remove(filterTagPane);
         });
         filterTagPane.getChildren().add(filterCloseButton);
@@ -460,11 +440,88 @@ public class DemoMapApp extends Application {
     }
     
     // filter
-    private void applyFilterToBackend(String filterType, String filterValue) {
+    private void applyFilterToBackend(PublicSchools publicSchools, String schoolType, GraphicsOverlay polyGraphic, List<DrawPolygon> polygons) {
+        String abbrevType = "";
+
+        switch(schoolType) {
+            case "Elementary":
+                abbrevType = "EL";
+                break;
+            case "Junior High":
+                abbrevType = "JR";
+                break;
+            case "High School":
+                abbrevType = "SR";
+                break;
+            case "Elementary + Junior High":
+                abbrevType = "EJ";
+                break;
+            case "Junior High + High School":
+                abbrevType = "JS";
+                break;
+            case "All Grades":
+                abbrevType = "EJS";
+                break;
+            case "Specialized Programming":
+                abbrevType = "SP";
+                break;
+            default:
+                break;
+        }
+
+        if (!abbrevType.isEmpty()) {
+            for (PublicSchool school : publicSchools.getBySchoolType(abbrevType)) {
+                if (school.getCatchmentArea() != null && !school.getCatchmentArea().isEmpty()) {
+                    DrawPolygon polygon = new DrawPolygon(polyGraphic, school.getCatchmentArea(), abbrevType);
+                    polygons.add(polygon);
+                }
+            }
+        }
     }
     
     // remove filter
-    private void removeFilterFromBackend(String filterType, String filterValue) {
+    private void removeFilterFromBackend(PublicSchools publicSchools, String schoolType, GraphicsOverlay polyGraphic, List<DrawPolygon> polygons) {
+        String abbrevType = "";
+
+        switch(schoolType) {
+            case "Elementary":
+                abbrevType = "EL";
+                break;
+            case "Junior High":
+                abbrevType = "JR";
+                break;
+            case "High School":
+                abbrevType = "SR";
+                break;
+            case "Elementary + Junior High":
+                abbrevType = "EJ";
+                break;
+            case "Junior High + High School":
+                abbrevType = "JS";
+                break;
+            case "All Grades":
+                abbrevType = "EJS";
+                break;
+            case "Specialized Programming":
+                abbrevType = "SP";
+                break;
+            default:
+                break;
+        }
+
+        if (!abbrevType.isEmpty()) {
+            List<DrawPolygon> polygonsToRemove = new ArrayList<>();
+            
+
+            for (DrawPolygon polygon : polygons) {
+                if (polygon.getGradeLevel().equals(abbrevType)) {
+                    polygon.removeGraphic();
+                    polygonsToRemove.add(polygon);
+                }
+            }
+
+            polygons.removeAll(polygonsToRemove);
+        }
     }
 
 }
