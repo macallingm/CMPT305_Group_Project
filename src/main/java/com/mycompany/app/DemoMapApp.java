@@ -62,6 +62,8 @@ public class DemoMapApp extends Application {
     private Map<Graphic, PublicSchool> graphicToSchoolMap = new HashMap<>();
     private Popup schoolInfoPopup;
     private PublicSchools  publicSchools = null;
+    private PropertyAssessments propertyAssessments = null;
+    private String filename= "Property_Assessment_Data_2025.csv";
 
 
     public static void main(String[] args) {
@@ -107,6 +109,14 @@ public class DemoMapApp extends Application {
         }
 
         // draw points for all schools
+        try {
+            propertyAssessments = new PropertyAssessments(filename);
+        } catch (IOException e) {
+            System.err.println("Error: can't open file " + filename);
+            return;
+        }
+
+        // Draw points for all schools
         for (PublicSchool school : publicSchools.getAllSchools()) {
             Point location = school.getLocation();
             if (location != null) {
@@ -116,7 +126,7 @@ public class DemoMapApp extends Application {
                 graphicToSchoolMap.put(schoolGraphic, school);
             }
         }
-        
+
         setupSchoolPointHoverHandler();
 
         mapView.setOnMouseClicked(event -> {
@@ -133,22 +143,26 @@ public class DemoMapApp extends Application {
             
             // Check all polygons
             boolean isIn = false;
+            DrawPolygon selectedPolygon = null;
             for (DrawPolygon poly : polygons) {
                 if (poly.inPolygon(longitude, latitude)) {
                     isIn = true;
+                    selectedPolygon = poly;
                     break;
                 }
             }
             
             if (isIn) {
                 System.out.println("True");
+                CatchmentProperties props = new CatchmentProperties(propertyAssessments,selectedPolygon);
+                props.getCatchmentProperties();
             }
             else {
                 System.out.println("False");
             }
         });
     }
-    
+
     // Setup hover handler for school points
     private void setupSchoolPointHoverHandler() {
         mapView.setOnMouseMoved(event -> {
@@ -158,40 +172,40 @@ public class DemoMapApp extends Application {
                 }
                 return;
             }
-            
+
             PublicSchool hoveredSchool = null;
-            
+
             // Convert screen point to map point
             javafx.geometry.Point2D screenPoint = new javafx.geometry.Point2D(event.getX(), event.getY());
             Point mapPoint = mapView.screenToLocation(screenPoint);
-            
+
             // Project from Web Mercator (map's SR) to WGS84 (degrees)
             Point wgsPoint = (Point) com.esri.arcgisruntime.geometry.GeometryEngine.project(
                     mapPoint, SpatialReferences.getWgs84());
-            
+
             double mouseLongitude = wgsPoint.getX();
             double mouseLatitude = wgsPoint.getY();
-            
+
             // check if mouse is over a red dot
             for (Map.Entry<Graphic, PublicSchool> entry : graphicToSchoolMap.entrySet()) {
                 Graphic graphic = entry.getKey();
                 if (graphic.isVisible()) {
                     Point graphicPoint = (Point) graphic.getGeometry();
-                    
+
                     // Euclidean distance using pythagorean theorem check from red dot to mouse cursor
                     double distance = Math.sqrt(
                         Math.pow(mouseLongitude - graphicPoint.getX(), 2) +
                         Math.pow(mouseLatitude - graphicPoint.getY(), 2)
                     );
 
-                    
+
                     if (distance < 0.001) {
                         hoveredSchool = entry.getValue();
                         break;
                     }
                 }
             }
-            
+
             if (hoveredSchool != null) {
                 showSchoolInfoPopup(hoveredSchool, event.getScreenX(), event.getScreenY());
             } else {
@@ -212,7 +226,7 @@ public class DemoMapApp extends Application {
         graphicsOverlay.getGraphics().add(graphic);
         return graphic;
     }
-    
+
     // show popup with school information on hover
     private void showSchoolInfoPopup(PublicSchool school, double screenX, double screenY) {
         if (schoolInfoPopup != null) {
@@ -220,7 +234,7 @@ public class DemoMapApp extends Application {
         }
         schoolInfoPopup = new Popup();
         schoolInfoPopup.setAutoHide(true);
-        
+
         VBox popupContent = new VBox(10);
         popupContent.setPadding(new Insets(15, 20, 15, 20));
         popupContent.setStyle("" +
@@ -231,18 +245,18 @@ public class DemoMapApp extends Application {
                 "-fx-border-width: 1; ");
         popupContent.setPrefWidth(280);
         popupContent.setMaxWidth(280);
-        
+
         // school name
         Label schoolNameLabel = new Label(school.getSchoolName());
         schoolNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         schoolNameLabel.setTextFill(Color.web("#1a5490"));
         schoolNameLabel.setWrapText(true);
         popupContent.getChildren().add(schoolNameLabel);
-        
+
         // separator
         Separator separator1 = new Separator();
         popupContent.getChildren().add(separator1);
-        
+
         // school type
         if (school.getSchoolType() != null && !school.getSchoolType().isEmpty()) {
             HBox typeBox = new HBox(5);
@@ -255,7 +269,7 @@ public class DemoMapApp extends Application {
             typeBox.getChildren().addAll(typeLabel, typeValue);
             popupContent.getChildren().add(typeBox);
         }
-        
+
         // grade range
         if (school.getGrades() != null && !school.getGrades().isEmpty()) {
             HBox gradeBox = new HBox(5);
@@ -268,7 +282,7 @@ public class DemoMapApp extends Application {
             gradeBox.getChildren().addAll(gradeLabel, gradeValue);
             popupContent.getChildren().add(gradeBox);
         }
-        
+
         // address
         if (school.getAddress() != null && !school.getAddress().isEmpty()) {
             popupContent.getChildren().add(new Separator());
@@ -283,7 +297,7 @@ public class DemoMapApp extends Application {
             addressBox.getChildren().addAll(addressLabel, addressValue);
             popupContent.getChildren().add(addressBox);
         }
-        
+
         schoolInfoPopup.getContent().add(popupContent);
         schoolInfoPopup.show(mapView.getScene().getWindow(), screenX - 140, screenY - 150);
     }
@@ -612,10 +626,12 @@ public class DemoMapApp extends Application {
                     polygons.add(polygon);
                 }
             }
+
             
             // show school points overlay when filter is applied
             schoolPointsGraphic.setVisible(true);
             
+
             // show school pts for filter type
             for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
                 if (entry.getValue().equals(abbrevType)) {
@@ -665,8 +681,13 @@ public class DemoMapApp extends Application {
                 }
             }
             polygons.removeAll(polygonsToRemove);
+
             
             // hide school pts for this filter type
+
+
+            // hide school pts
+
             for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
                 if (entry.getValue().equals(abbrevType)) {
                     entry.getKey().setVisible(false);

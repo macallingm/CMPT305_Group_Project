@@ -189,4 +189,8 @@ public class PropertyAssessments {
         }
         return new PropertyAssessments(residentialProperties);
     }
+
+    public List <PropertyAssessment> getPropertyAssessments() {
+        return propertyAssessments;
+    }
 }
