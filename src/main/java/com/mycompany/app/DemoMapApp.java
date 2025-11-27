@@ -59,6 +59,7 @@ public class DemoMapApp extends Application {
     private GraphicsOverlay schoolPointsGraphic = new GraphicsOverlay();
 
     private List<DrawPolygon> polygons = new ArrayList<>();
+    private Map<Graphic, String> graphicToSchoolTypeMap = new HashMap<>();
     private Map<Graphic, PublicSchool> graphicToSchoolMap = new HashMap<>();
     private Popup schoolInfoPopup;
     private PublicSchools  publicSchools = null;
@@ -106,66 +107,18 @@ public class DemoMapApp extends Application {
             return;
         }
 
-        // Draw points for all schools (working on doing based on filter)
+        // draw points for all schools
         for (PublicSchool school : publicSchools.getAllSchools()) {
             Point location = school.getLocation();
             if (location != null) {
                 Graphic schoolGraphic = createPoints(location.getY(), location.getX(), schoolPointsGraphic);
+                schoolGraphic.setVisible(false);
+                graphicToSchoolTypeMap.put(schoolGraphic, school.getSchoolType());
                 graphicToSchoolMap.put(schoolGraphic, school);
             }
         }
         
-        // Setup hover handler for school points
-        mapView.setOnMouseMoved(event -> {
-            if (!schoolPointsGraphic.isVisible()) {
-                if (schoolInfoPopup != null) {
-                    schoolInfoPopup.hide();
-                }
-                return;
-            }
-            
-            PublicSchool hoveredSchool = null;
-            
-            // Convert screen point to map point
-            javafx.geometry.Point2D screenPoint = new javafx.geometry.Point2D(event.getX(), event.getY());
-            Point mapPoint = mapView.screenToLocation(screenPoint);
-            
-            // Project from Web Mercator (map's SR) to WGS84 (degrees)
-            Point wgsPoint = (Point) com.esri.arcgisruntime.geometry.GeometryEngine.project(
-                    mapPoint, SpatialReferences.getWgs84());
-            
-            double mouseLongitude = wgsPoint.getX();
-            double mouseLatitude = wgsPoint.getY();
-            
-            // check if mouse is over a red dot
-            for (Map.Entry<Graphic, PublicSchool> entry : graphicToSchoolMap.entrySet()) {
-                Graphic graphic = entry.getKey();
-                if (graphic.isVisible()) {
-                    Point graphicPoint = (Point) graphic.getGeometry();
-                    
-                    // pythagorean theorem check from red dot to mouse cursor
-                    // c = sqrt((mx - dx)^2 + (my - dy)^))
-                    double distance = Math.sqrt(
-                        Math.pow(mouseLongitude - graphicPoint.getX(), 2) +
-                        Math.pow(mouseLatitude - graphicPoint.getY(), 2)
-                    );
-
-
-                    if (distance < 0.001) {
-                        hoveredSchool = entry.getValue();
-                        break;
-                    }
-                }
-            }
-            
-            if (hoveredSchool != null) {
-                showSchoolInfoPopup(hoveredSchool, event.getScreenX(), event.getScreenY());
-            } else {
-                if (schoolInfoPopup != null) {
-                    schoolInfoPopup.hide();
-                }
-            }
-        });
+        setupSchoolPointHoverHandler();
 
         mapView.setOnMouseClicked(event -> {
             // Convert screen point to map point
@@ -193,6 +146,59 @@ public class DemoMapApp extends Application {
             }
             else {
                 System.out.println("False");
+            }
+        });
+    }
+    
+    // Setup hover handler for school points
+    private void setupSchoolPointHoverHandler() {
+        mapView.setOnMouseMoved(event -> {
+            if (!schoolPointsGraphic.isVisible()) {
+                if (schoolInfoPopup != null) {
+                    schoolInfoPopup.hide();
+                }
+                return;
+            }
+            
+            PublicSchool hoveredSchool = null;
+            
+            // Convert screen point to map point
+            javafx.geometry.Point2D screenPoint = new javafx.geometry.Point2D(event.getX(), event.getY());
+            Point mapPoint = mapView.screenToLocation(screenPoint);
+            
+            // Project from Web Mercator (map's SR) to WGS84 (degrees)
+            Point wgsPoint = (Point) com.esri.arcgisruntime.geometry.GeometryEngine.project(
+                    mapPoint, SpatialReferences.getWgs84());
+            
+            double mouseLongitude = wgsPoint.getX();
+            double mouseLatitude = wgsPoint.getY();
+            
+            // check if mouse is over a red dot
+            for (Map.Entry<Graphic, PublicSchool> entry : graphicToSchoolMap.entrySet()) {
+                Graphic graphic = entry.getKey();
+                if (graphic.isVisible()) {
+                    Point graphicPoint = (Point) graphic.getGeometry();
+                    
+                    // Euclidean distance using pythagorean theorem check from red dot to mouse cursor
+                    double distance = Math.sqrt(
+                        Math.pow(mouseLongitude - graphicPoint.getX(), 2) +
+                        Math.pow(mouseLatitude - graphicPoint.getY(), 2)
+                    );
+
+                    
+                    if (distance < 0.001) {
+                        hoveredSchool = entry.getValue();
+                        break;
+                    }
+                }
+            }
+            
+            if (hoveredSchool != null) {
+                showSchoolInfoPopup(hoveredSchool, event.getScreenX(), event.getScreenY());
+            } else {
+                if (schoolInfoPopup != null) {
+                    schoolInfoPopup.hide();
+                }
             }
         });
     }
@@ -600,6 +606,13 @@ public class DemoMapApp extends Application {
                     polygons.add(polygon);
                 }
             }
+            
+            // show school pts for filter type
+            for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
+                if (entry.getValue().equals(abbrevType)) {
+                    entry.getKey().setVisible(true);
+                }
+            }
         }
     }
     
@@ -643,6 +656,13 @@ public class DemoMapApp extends Application {
                 }
             }
             polygons.removeAll(polygonsToRemove);
+            
+            // hide school pts
+            for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
+                if (entry.getValue().equals(abbrevType)) {
+                    entry.getKey().setVisible(false);
+                }
+            }
         }
     }
 
