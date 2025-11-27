@@ -33,7 +33,11 @@ public class DrawPolygon{
         }
 
         testPolygon = new Polygon(testCollection);
+
+        
+
         float borderWidth = 3.0F;
+
 
         if(gradeLevel.equals("EL")){
             polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF8000",0.4),

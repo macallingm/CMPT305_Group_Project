@@ -43,7 +43,9 @@ import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DemoMapApp extends Application {
 
@@ -57,6 +59,9 @@ public class DemoMapApp extends Application {
     private GraphicsOverlay schoolPointsGraphic = new GraphicsOverlay();
 
     private List<DrawPolygon> polygons = new ArrayList<>();
+    private Map<Graphic, String> graphicToSchoolTypeMap = new HashMap<>();
+    private Map<Graphic, PublicSchool> graphicToSchoolMap = new HashMap<>();
+    private Popup schoolInfoPopup;
     private PublicSchools  publicSchools = null;
 
 
@@ -102,13 +107,18 @@ public class DemoMapApp extends Application {
             return;
         }
 
-        // Draw points for all schools
+        // draw points for all schools
         for (PublicSchool school : publicSchools.getAllSchools()) {
             Point location = school.getLocation();
             if (location != null) {
-                createPoints(location.getY(), location.getX(), schoolPointsGraphic);
+                Graphic schoolGraphic = createPoints(location.getY(), location.getX(), schoolPointsGraphic);
+                schoolGraphic.setVisible(false);
+                graphicToSchoolTypeMap.put(schoolGraphic, school.getSchoolType());
+                graphicToSchoolMap.put(schoolGraphic, school);
             }
         }
+        
+        setupSchoolPointHoverHandler();
 
         mapView.setOnMouseClicked(event -> {
             // Convert screen point to map point
@@ -139,8 +149,61 @@ public class DemoMapApp extends Application {
             }
         });
     }
+    
+    // Setup hover handler for school points
+    private void setupSchoolPointHoverHandler() {
+        mapView.setOnMouseMoved(event -> {
+            if (!schoolPointsGraphic.isVisible()) {
+                if (schoolInfoPopup != null) {
+                    schoolInfoPopup.hide();
+                }
+                return;
+            }
+            
+            PublicSchool hoveredSchool = null;
+            
+            // Convert screen point to map point
+            javafx.geometry.Point2D screenPoint = new javafx.geometry.Point2D(event.getX(), event.getY());
+            Point mapPoint = mapView.screenToLocation(screenPoint);
+            
+            // Project from Web Mercator (map's SR) to WGS84 (degrees)
+            Point wgsPoint = (Point) com.esri.arcgisruntime.geometry.GeometryEngine.project(
+                    mapPoint, SpatialReferences.getWgs84());
+            
+            double mouseLongitude = wgsPoint.getX();
+            double mouseLatitude = wgsPoint.getY();
+            
+            // check if mouse is over a red dot
+            for (Map.Entry<Graphic, PublicSchool> entry : graphicToSchoolMap.entrySet()) {
+                Graphic graphic = entry.getKey();
+                if (graphic.isVisible()) {
+                    Point graphicPoint = (Point) graphic.getGeometry();
+                    
+                    // Euclidean distance using pythagorean theorem check from red dot to mouse cursor
+                    double distance = Math.sqrt(
+                        Math.pow(mouseLongitude - graphicPoint.getX(), 2) +
+                        Math.pow(mouseLatitude - graphicPoint.getY(), 2)
+                    );
 
-    private static void createPoints(double lat,  double lon, GraphicsOverlay graphicsOverlay) {
+                    
+                    if (distance < 0.001) {
+                        hoveredSchool = entry.getValue();
+                        break;
+                    }
+                }
+            }
+            
+            if (hoveredSchool != null) {
+                showSchoolInfoPopup(hoveredSchool, event.getScreenX(), event.getScreenY());
+            } else {
+                if (schoolInfoPopup != null) {
+                    schoolInfoPopup.hide();
+                }
+            }
+        });
+    }
+
+    private Graphic createPoints(double lat,  double lon, GraphicsOverlay graphicsOverlay) {
 
         // create a red circle simple marker symbol
         SimpleMarkerSymbol redCircleSymbol = new SimpleMarkerSymbol(SimpleMarkerSymbol.Style.CIRCLE, Color.RED, 10);
@@ -148,6 +211,82 @@ public class DemoMapApp extends Application {
         // create graphics and add to graphics overlay
         Graphic graphic = new Graphic(new Point(lon,lat, SpatialReferences.getWgs84()), redCircleSymbol);
         graphicsOverlay.getGraphics().add(graphic);
+        return graphic;
+    }
+    
+    // show popup with school information on hover
+    private void showSchoolInfoPopup(PublicSchool school, double screenX, double screenY) {
+        if (schoolInfoPopup != null) {
+            schoolInfoPopup.hide();
+        }
+        schoolInfoPopup = new Popup();
+        schoolInfoPopup.setAutoHide(true);
+        
+        VBox popupContent = new VBox(10);
+        popupContent.setPadding(new Insets(15, 20, 15, 20));
+        popupContent.setStyle("" +
+                "-fx-background-color: white; " +
+                "-fx-background-radius: 8; " +
+                "-fx-border-color: #cccccc; " +
+                "-fx-border-radius: 8; " +
+                "-fx-border-width: 1; ");
+        popupContent.setPrefWidth(280);
+        popupContent.setMaxWidth(280);
+        
+        // school name
+        Label schoolNameLabel = new Label(school.getSchoolName());
+        schoolNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        schoolNameLabel.setTextFill(Color.web("#1a5490"));
+        schoolNameLabel.setWrapText(true);
+        popupContent.getChildren().add(schoolNameLabel);
+        
+        // separator
+        Separator separator1 = new Separator();
+        popupContent.getChildren().add(separator1);
+        
+        // school type
+        if (school.getSchoolType() != null && !school.getSchoolType().isEmpty()) {
+            HBox typeBox = new HBox(5);
+            Label typeLabel = new Label("Type:");
+            typeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            typeLabel.setTextFill(Color.web("#666666"));
+            Label typeValue = new Label(school.getSchoolType());
+            typeValue.setFont(Font.font("Arial", 12));
+            typeValue.setTextFill(Color.web("#333333"));
+            typeBox.getChildren().addAll(typeLabel, typeValue);
+            popupContent.getChildren().add(typeBox);
+        }
+        
+        // grade range
+        if (school.getGrades() != null && !school.getGrades().isEmpty()) {
+            HBox gradeBox = new HBox(5);
+            Label gradeLabel = new Label("Grades:");
+            gradeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            gradeLabel.setTextFill(Color.web("#666666"));
+            Label gradeValue = new Label(school.getGrades());
+            gradeValue.setFont(Font.font("Arial", 12));
+            gradeValue.setTextFill(Color.web("#333333"));
+            gradeBox.getChildren().addAll(gradeLabel, gradeValue);
+            popupContent.getChildren().add(gradeBox);
+        }
+        
+        // address
+        if (school.getAddress() != null && !school.getAddress().isEmpty()) {
+            popupContent.getChildren().add(new Separator());
+            VBox addressBox = new VBox(3);
+            Label addressLabel = new Label("Address:");
+            addressLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            addressLabel.setTextFill(Color.web("#666666"));
+            Label addressValue = new Label(school.getAddress());
+            addressValue.setFont(Font.font("Arial", 12));
+            addressValue.setTextFill(Color.web("#333333"));
+            addressValue.setWrapText(true);
+            addressBox.getChildren().addAll(addressLabel, addressValue);
+            popupContent.getChildren().add(addressBox);
+        }
+        
+        schoolInfoPopup.getContent().add(popupContent);
+        schoolInfoPopup.show(mapView.getScene().getWindow(), screenX - 140, screenY - 150);
     }
 
     // ui
@@ -460,10 +599,18 @@ public class DemoMapApp extends Application {
         }
 
         if (!abbrevType.isEmpty()) {
+            // Show polygons for this filter type
             for (PublicSchool school : publicSchools.getBySchoolType(abbrevType)) {
                 if (school.getCatchmentArea() != null && !school.getCatchmentArea().isEmpty()) {
                     DrawPolygon polygon = new DrawPolygon(polyGraphic, school.getCatchmentArea(), abbrevType);
                     polygons.add(polygon);
+                }
+            }
+            
+            // show school pts for filter type
+            for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
+                if (entry.getValue().equals(abbrevType)) {
+                    entry.getKey().setVisible(true);
                 }
             }
         }
@@ -500,17 +647,22 @@ public class DemoMapApp extends Application {
         }
 
         if (!abbrevType.isEmpty()) {
+            // remove for the filter type
             List<DrawPolygon> polygonsToRemove = new ArrayList<>();
-            
-
             for (DrawPolygon polygon : polygons) {
                 if (polygon.getGradeLevel().equals(abbrevType)) {
                     polygon.removeGraphic();
                     polygonsToRemove.add(polygon);
                 }
             }
-
             polygons.removeAll(polygonsToRemove);
+            
+            // hide school pts
+            for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
+                if (entry.getValue().equals(abbrevType)) {
+                    entry.getKey().setVisible(false);
+                }
+            }
         }
     }
 
