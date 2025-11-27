@@ -55,7 +55,6 @@ public class DemoMapApp extends Application {
     private VBox leftPanel;
     private GraphicsOverlay polyGraphic = new GraphicsOverlay();
 
-    private CheckBox showSchoolPointsToggle;
     private GraphicsOverlay schoolPointsGraphic = new GraphicsOverlay();
 
     private List<DrawPolygon> polygons = new ArrayList<>();
@@ -350,20 +349,7 @@ public class DemoMapApp extends Application {
 
         setupSchoolTypeFilter(schoolTypeBtn);
 
-        // toggle for showing/hiding school points
-        showSchoolPointsToggle = new CheckBox("Show School Points");
-        showSchoolPointsToggle.setPrefWidth(250);
-        showSchoolPointsToggle.setPrefHeight(40);
-        showSchoolPointsToggle.setPadding(new Insets(5, 5, 5, 5));
-        showSchoolPointsToggle.setStyle("" +
-                "-fx-background-color: white; " +
-                "-fx-background-radius: 5; " +
-                "-fx-border-color: #cccccc; " +
-                "-fx-border-radius: 5;");
-        showSchoolPointsToggle.setFont(Font.font("Arial", 14));
-        setupSchoolPointsToggle();
-
-        leftPanelVBox.getChildren().addAll(searchContainer, schoolTypeBtn, showSchoolPointsToggle);
+        leftPanelVBox.getChildren().addAll(searchContainer, schoolTypeBtn);
 
         leftPanelVBox.setPadding(new Insets(10));
 
@@ -443,14 +429,6 @@ public class DemoMapApp extends Application {
                 filterButtonParam.localToScreen(0, filterButtonParam.getHeight()).getY());
         });
     }
-
-    // school points toggle
-    private void setupSchoolPointsToggle() {
-        showSchoolPointsToggle.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            schoolPointsGraphic.setVisible(newValue);
-        });
-    }
-
 
     // custom menu dropdown for the filters
     private Popup createCustomMenu(String title, String[] items, Button filterButton) {
@@ -635,6 +613,9 @@ public class DemoMapApp extends Application {
                 }
             }
             
+            // show school points overlay when filter is applied
+            schoolPointsGraphic.setVisible(true);
+            
             // show school pts for filter type
             for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
                 if (entry.getValue().equals(abbrevType)) {
@@ -685,11 +666,16 @@ public class DemoMapApp extends Application {
             }
             polygons.removeAll(polygonsToRemove);
             
-            // hide school pts
+            // hide school pts for this filter type
             for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
                 if (entry.getValue().equals(abbrevType)) {
                     entry.getKey().setVisible(false);
                 }
+            }
+            
+            // hide school points overlay if there are no filters
+            if (polygons.isEmpty()) {
+                schoolPointsGraphic.setVisible(false);
             }
         }
     }
