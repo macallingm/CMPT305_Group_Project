@@ -534,25 +534,25 @@ public class DemoMapApp extends Application {
 
         switch(tagText) {
             case "Elementary":
-                color = "A35200";
+                color = "#A35200";
                 break;
             case "Junior High":
-                color = "0000A3";
+                color = "#0000A3";
                 break;
             case "High School":
-                color = "A30052";
+                color = "#A30052";
                 break;
             case "Elementary + Junior High":
-                color = "00A352";
+                color = "#00A352";
                 break;
             case "Junior High + High School":
-                color = "A30000";
+                color = "#A30000";
                 break;
             case "All Grades":
-                color = "58007C";
+                color = "#58007C";
                 break;
             case "Specialized Programming":
-                color = "CCBB00";
+                color = "#CCBB00";
                 break;
             default:
                 break;
