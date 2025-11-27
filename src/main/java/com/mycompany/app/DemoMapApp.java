@@ -522,7 +522,7 @@ public class DemoMapApp extends Application {
             
             // when a filter is clicked
             menuItemHBox.setOnMouseClicked(menuItemClickEvent -> {
-                addFilterTag(menuItemText, "#FF8C00", filterButton);
+                addFilterTag(menuItemText, filterButton);
                 applyFilterToBackend(publicSchools, menuItemText, polyGraphic, polygons);
                 filterMenuPopup.hide();
             });
@@ -539,11 +539,39 @@ public class DemoMapApp extends Application {
     }
     
     // filter tag
-    private void addFilterTag(String tagText, String color, Button filterButton) {
+    private void addFilterTag(String tagText, Button filterButton) {
         // pane
         Pane filterTagPane = new Pane();
         filterTagPane.setPrefWidth(250);
         filterTagPane.setPrefHeight(40);
+        String color = "000000";
+
+        switch(tagText) {
+            case "Elementary":
+                color = "A35200";
+                break;
+            case "Junior High":
+                color = "0000A3";
+                break;
+            case "High School":
+                color = "A30052";
+                break;
+            case "Elementary + Junior High":
+                color = "00A352";
+                break;
+            case "Junior High + High School":
+                color = "A30000";
+                break;
+            case "All Grades":
+                color = "58007C";
+                break;
+            case "Specialized Programming":
+                color = "CCBB00";
+                break;
+            default:
+                break;
+        }
+
         filterTagPane.setStyle("" +
                 "-fx-background-color: " + color + "; " +
                 "-fx-background-radius: 20;");
