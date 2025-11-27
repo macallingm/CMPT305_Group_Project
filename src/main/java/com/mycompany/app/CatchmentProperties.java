@@ -16,12 +16,9 @@ public class CatchmentProperties {
     }
 
     public void getCatchmentProperties() {
-
-        for (PropertyAssessment property : propertyAssessments.getPropertyAssessments()) {
-            if (polygon.inPolygon(property.getLocation().getLongitude(), property.getLocation().getLatitude())){
-                neighborhoods.add(property.getNeighborhood());
-            }
-        }
+        propertyAssessments.getPropertyAssessments().stream()
+                .filter(p -> polygon.inPolygon(p.getLocation().getLongitude(), p.getLocation().getLatitude()))
+                .forEach(p -> neighborhoods.add(p.getNeighborhood()));
         System.out.println(neighborhoods);
     }
 }
