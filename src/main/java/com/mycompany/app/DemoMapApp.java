@@ -44,8 +44,10 @@ import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DemoMapApp extends Application {
 
@@ -60,7 +62,10 @@ public class DemoMapApp extends Application {
     private List<DrawPolygon> polygons = new ArrayList<>();
     private Map<Graphic, String> graphicToSchoolTypeMap = new HashMap<>();
     private Map<Graphic, PublicSchool> graphicToSchoolMap = new HashMap<>();
+    private Map<DrawPolygon, PublicSchool> polygonToSchoolMap = new HashMap<>();
+    private List<String> activeFilters = new ArrayList<>();
     private Popup schoolInfoPopup;
+    private Popup catchmentStatsPopup;
     private PublicSchools  publicSchools = null;
     private PropertyAssessments propertyAssessments = null;
     private String filename= "Property_Assessment_Data_2025.csv";
@@ -141,24 +146,17 @@ public class DemoMapApp extends Application {
             double latitude = wgsPoint.getY();
             double longitude = wgsPoint.getX();
             
-            // Check all polygons
-            boolean isIn = false;
-            DrawPolygon selectedPolygon = null;
+            // check all polygons and collect all overlapping ones
+            List<DrawPolygon> overlappingPolygons = new ArrayList<>();
             for (DrawPolygon poly : polygons) {
                 if (poly.inPolygon(longitude, latitude)) {
-                    isIn = true;
-                    selectedPolygon = poly;
-                    break;
+                    overlappingPolygons.add(poly);
                 }
             }
             
-            if (isIn) {
-                System.out.println("True");
-                CatchmentProperties props = new CatchmentProperties(propertyAssessments,selectedPolygon);
-                props.getCatchmentProperties();
-            }
-            else {
-                System.out.println("False");
+            if (!overlappingPolygons.isEmpty()) {
+                // show popup with information for all overlapping polygons
+                showOverlappingPolygonsPopup(overlappingPolygons, event.getScreenX(), event.getScreenY());
             }
         });
     }
@@ -225,6 +223,133 @@ public class DemoMapApp extends Application {
         Graphic graphic = new Graphic(new Point(lon,lat, SpatialReferences.getWgs84()), redCircleSymbol);
         graphicsOverlay.getGraphics().add(graphic);
         return graphic;
+    }
+    
+    // show popup with info for overlapping polys
+    private void showOverlappingPolygonsPopup(List<DrawPolygon> overlappingPolygons, double screenX, double screenY) {
+        if (catchmentStatsPopup != null) {
+            catchmentStatsPopup.hide();
+        }
+        
+        catchmentStatsPopup = new Popup();
+        catchmentStatsPopup.setAutoHide(true);
+        
+        VBox popupContent = new VBox(10);
+        popupContent.setPadding(new Insets(20, 25, 20, 25));
+        popupContent.setStyle("" +
+                "-fx-background-color: white; " +
+                "-fx-background-radius: 10; " +
+                "-fx-border-color: #cccccc; " +
+                "-fx-border-radius: 10; " +
+                "-fx-border-width: 2; ");
+        popupContent.setPrefWidth(500);
+        popupContent.setMaxWidth(500);
+        popupContent.setMaxHeight(600);
+        
+        // title
+        Label titleLabel = new Label("Overlapping Catchment Zones");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        titleLabel.setTextFill(Color.web("#1a5490"));
+        popupContent.getChildren().add(titleLabel);
+
+        
+        Separator separator1 = new Separator();
+        popupContent.getChildren().add(separator1);
+        
+        // to scroll for multiple polygons
+        ScrollPane scrollPane = new ScrollPane();
+        VBox polygonsList = new VBox(15);
+        polygonsList.setPadding(new Insets(5));
+
+        Set<PublicSchool> shownSchoolsOnPopUp = new HashSet<>();
+        
+        for (DrawPolygon polygon : overlappingPolygons) {
+            PublicSchool school = polygonToSchoolMap.get(polygon);
+            if (school != null && !shownSchoolsOnPopUp.contains(school)) {
+                shownSchoolsOnPopUp.add(school);
+                VBox polygonInfoBox = createPolygonInfoBox(school, polygon);
+                polygonsList.getChildren().add(polygonInfoBox);
+            }
+        }
+        
+        scrollPane.setContent(polygonsList);
+        scrollPane.setPrefHeight(450);
+        scrollPane.setMaxHeight(450);
+        scrollPane.setStyle("-fx-background-color: #f9f9f9; -fx-border-color: #e0e0e0;");
+        popupContent.getChildren().add(scrollPane);
+        
+        catchmentStatsPopup.getContent().add(popupContent);
+        catchmentStatsPopup.show(mapView.getScene().getWindow(), screenX - 250, screenY - 300);
+    }
+    
+    // create box for one polygon
+    private VBox createPolygonInfoBox(PublicSchool school, DrawPolygon polygon) {
+        VBox infoBox = new VBox(8);
+        infoBox.setPadding(new Insets(12));
+        infoBox.setStyle("" +
+                "-fx-background-color: white; " +
+                "-fx-background-radius: 8; " +
+                "-fx-border-color: #e0e0e0; " +
+                "-fx-border-radius: 8; " +
+                "-fx-border-width: 1;");
+        
+        // school name
+        Label schoolNameLabel = new Label(school.getSchoolName());
+        schoolNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        schoolNameLabel.setTextFill(Color.web("#1a5490"));
+        schoolNameLabel.setWrapText(true);
+        infoBox.getChildren().add(schoolNameLabel);
+        
+        Separator separator = new Separator();
+        infoBox.getChildren().add(separator);
+        
+        // school type
+        if (school.getSchoolType() != null && !school.getSchoolType().isEmpty()) {
+            HBox typeBox = new HBox(5);
+            Label typeLabel = new Label("Type:");
+            typeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            typeLabel.setTextFill(Color.web("#666666"));
+            Label typeValue = new Label(school.getSchoolType());
+            typeValue.setFont(Font.font("Arial", 12));
+            typeValue.setTextFill(Color.web("#333333"));
+            typeBox.getChildren().addAll(typeLabel, typeValue);
+            infoBox.getChildren().add(typeBox);
+        }
+        
+        // grades
+        if (school.getGrades() != null && !school.getGrades().isEmpty()) {
+            HBox gradeBox = new HBox(5);
+            Label gradeLabel = new Label("Grades:");
+            gradeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            gradeLabel.setTextFill(Color.web("#666666"));
+            Label gradeValue = new Label(school.getGrades());
+            gradeValue.setFont(Font.font("Arial", 12));
+            gradeValue.setTextFill(Color.web("#333333"));
+            gradeBox.getChildren().addAll(gradeLabel, gradeValue);
+            infoBox.getChildren().add(gradeBox);
+        }
+        
+        // catchment properties
+        if (propertyAssessments != null) {
+            CatchmentProperties props = new CatchmentProperties(propertyAssessments, polygon);
+            props.getCatchmentProperties();
+            
+            Separator propsSeparator = new Separator();
+            infoBox.getChildren().add(propsSeparator);
+            
+            Label propsLabel = new Label("Catchment Statistics:");
+            propsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            propsLabel.setTextFill(Color.web("#666666"));
+            infoBox.getChildren().add(propsLabel);
+
+            // fill with actual stats, just placeholder for now
+            Label statsLabel = new Label("(Statistics available)");
+            statsLabel.setFont(Font.font("Arial", 11));
+            statsLabel.setTextFill(Color.web("#999999"));
+            infoBox.getChildren().add(statsLabel);
+        }
+        
+        return infoBox;
     }
 
     // show popup with school information on hover
@@ -500,8 +625,12 @@ public class DemoMapApp extends Application {
             
             // when a filter is clicked
             menuItemHBox.setOnMouseClicked(menuItemClickEvent -> {
-                addFilterTag(menuItemText, filterButton);
-                applyFilterToBackend(publicSchools, menuItemText, polyGraphic, polygons);
+                // check if filter is already applied to account for dupes
+                if (!activeFilters.contains(menuItemText)) {
+                    addFilterTag(menuItemText, filterButton);
+                    applyFilterToBackend(publicSchools, menuItemText, polyGraphic, polygons);
+                    activeFilters.add(menuItemText);
+                }
                 filterMenuPopup.hide();
             });
             
@@ -554,6 +683,9 @@ public class DemoMapApp extends Application {
                 "-fx-background-color: " + color + "; " +
                 "-fx-background-radius: 20;");
         
+
+        filterTagPane.setUserData(tagText);
+        
         // text
         Label filterTagLabel = new Label(tagText);
         filterTagLabel.setTextFill(Color.WHITE);
@@ -569,7 +701,22 @@ public class DemoMapApp extends Application {
         filterCloseButton.setCursor(Cursor.HAND);
         filterCloseButton.setOnMouseClicked(closeClickEvent -> {
             removeFilterFromBackend(publicSchools, tagText, polyGraphic, polygons);
-            ((VBox) filterTagPane.getParent()).getChildren().remove(filterTagPane);
+            activeFilters.remove(tagText);
+            
+            // remove alll filter tags
+            VBox parentVBox = (VBox) filterButton.getParent();
+            if (parentVBox != null) {
+                List<javafx.scene.Node> nodesToRemove = new ArrayList<>();
+                for (javafx.scene.Node node : parentVBox.getChildren()) {
+                    if (node instanceof Pane) {
+                        Object userData = ((Pane) node).getUserData();
+                        if (userData != null && userData.equals(tagText)) {
+                            nodesToRemove.add(node);
+                        }
+                    }
+                }
+                parentVBox.getChildren().removeAll(nodesToRemove);
+            }
         });
         filterTagPane.getChildren().add(filterCloseButton);
         filterCloseButton.layoutXProperty().bind(filterTagPane.widthProperty().subtract(24));
@@ -619,11 +766,23 @@ public class DemoMapApp extends Application {
         }
 
         if (!abbrevType.isEmpty()) {
-            // Show polygons for this filter type
-            for (PublicSchool school : publicSchools.getBySchoolType(abbrevType)) {
-                if (school.getCatchmentArea() != null && !school.getCatchmentArea().isEmpty()) {
-                    DrawPolygon polygon = new DrawPolygon(polyGraphic, school.getCatchmentArea(), abbrevType);
-                    polygons.add(polygon);
+            // check if polygons for this filter type already exist to prevent duplicates
+            boolean filterAlreadyApplied = false;
+            for (DrawPolygon polygon : polygons) {
+                if (polygon.getGradeLevel().equals(abbrevType)) {
+                    filterAlreadyApplied = true;
+                    break;
+                }
+            }
+            
+            // only add polygons if thefuilter type hasn't been applied yet
+            if (!filterAlreadyApplied) {
+                for (PublicSchool school : publicSchools.getBySchoolType(abbrevType)) {
+                    if (school.getCatchmentArea() != null && !school.getCatchmentArea().isEmpty()) {
+                        DrawPolygon polygon = new DrawPolygon(polyGraphic, school.getCatchmentArea(), abbrevType);
+                        polygons.add(polygon);
+                        polygonToSchoolMap.put(polygon, school);
+                    }
                 }
             }
 
@@ -678,6 +837,7 @@ public class DemoMapApp extends Application {
                 if (polygon.getGradeLevel().equals(abbrevType)) {
                     polygon.removeGraphic();
                     polygonsToRemove.add(polygon);
+                    polygonToSchoolMap.remove(polygon);
                 }
             }
             polygons.removeAll(polygonsToRemove);
