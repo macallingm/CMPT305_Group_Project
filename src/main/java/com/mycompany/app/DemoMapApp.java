@@ -25,9 +25,11 @@ import com.esri.arcgisruntime.mapping.view.MapView;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.*;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.Cursor;
 import javafx.scene.paint.Color;
@@ -41,6 +43,7 @@ import com.esri.arcgisruntime.geometry.SpatialReferences;
 import com.esri.arcgisruntime.mapping.view.Graphic;
 import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -312,18 +315,14 @@ public class DemoMapApp extends Application {
         mainRootPane.getChildren().add(mapView);
 
         // title at the very top of screen
-        Label mapTitle = new Label("Edmonton School Catchment Zones");
-        mapTitle.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 48));
-        mapTitle.setTextFill(Color.web("#1a5490"));
-        mapTitle.setMouseTransparent(true);
-        StackPane.setAlignment(mapTitle, Pos.TOP_CENTER);
-        StackPane.setMargin(mapTitle, new Insets(20, 0, 0, 0));
-        mainRootPane.getChildren().add(mapTitle);
+        HBox topBar = createTopBar();
+        StackPane.setAlignment(topBar, Pos.TOP_CENTER);
+        mainRootPane.getChildren().add(topBar);
 
         // left panel
         leftPanel = createLeftPanel();
         StackPane.setAlignment(leftPanel, Pos.TOP_LEFT);
-        StackPane.setMargin(leftPanel, new Insets(80, 0, 0, 20));
+        StackPane.setMargin(leftPanel, new Insets(100, 0, 0, 20));
         mainRootPane.getChildren().add(leftPanel);
 
         return mainRootPane;
@@ -708,6 +707,21 @@ public class DemoMapApp extends Application {
         }
     }
 
+    private HBox createTopBar() {
+        Label mapTitle = new Label("Edmonton School Catchment Zones");
+        mapTitle.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 48));
+        mapTitle.setTextFill(Color.WHITE);
+//        mapTitle.setMouseTransparent(true);
+
+        HBox topBar = new HBox();
+        topBar.setPadding(new Insets(15));
+        topBar.setStyle("-fx-background-color: #1a5490;");
+        topBar.setPrefWidth(Double.MAX_VALUE);
+        topBar.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        topBar.setAlignment(Pos.CENTER);
+        topBar.getChildren().add(mapTitle);
+        return topBar;
+    }
 }
 
 
