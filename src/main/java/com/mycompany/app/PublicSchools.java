@@ -33,9 +33,11 @@ public class PublicSchools {
                 Point catchmentPoint = null;
 
                 if (!values[19].isEmpty()) {
+                    // strip leading and trailing non-numeric characters and split on commas
                     String multipolygon = values[19].substring(16, values[19].length() - 3);
                     String[] points = multipolygon.split(",");
 
+                    // some will be "43757))" and some will be "((3489..."
                     for (String point : points) {
                         String[] pointValues = point.stripLeading().split(" ");
                         catchmentPoint = new Point(Double.parseDouble(pointValues[0]),
