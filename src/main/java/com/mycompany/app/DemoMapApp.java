@@ -107,7 +107,7 @@ public class DemoMapApp extends Application {
         schoolPointsGraphic.setVisible(false);
 
         try {
-            publicSchools = new PublicSchools("Edmonton_Public_School_Board_2025_Small.csv");
+            publicSchools = new PublicSchools("Edmonton_Public_School_Board_2025.csv");
         } catch (IOException e) {
             System.err.println("Error: can't open file");
             return;
@@ -775,11 +775,11 @@ public class DemoMapApp extends Application {
                 }
             }
             
-            // only add polygons if thefuilter type hasn't been applied yet
+            // only add polygons if this filter type hasn't been applied yet
             if (!filterAlreadyApplied) {
                 for (PublicSchool school : publicSchools.getBySchoolType(abbrevType)) {
-                    if (school.getCatchmentArea() != null && !school.getCatchmentArea().isEmpty()) {
-                        DrawPolygon polygon = new DrawPolygon(polyGraphic, school.getCatchmentArea(), abbrevType);
+                    if (school.getCatchmentAreas() != null && !school.getCatchmentAreas().isEmpty()) {
+                        DrawPolygon polygon = new DrawPolygon(polyGraphic, school.getCatchmentAreas(), abbrevType);
                         polygons.add(polygon);
                         polygonToSchoolMap.put(polygon, school);
                     }

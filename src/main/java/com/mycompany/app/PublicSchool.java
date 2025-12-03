@@ -11,17 +11,17 @@ public class PublicSchool {
     private final String grades;
     private final String address;
     private final Point location;
-    private final List<Point> catchmentArea;
+    private final List<List<Point>> catchmentAreas;
 
     public PublicSchool(int schoolID, String schoolName,  String schoolType, String grades, String address,
-                        Point location, List<Point> catchmentArea) {
+                        Point location, List<List<Point>> catchmentAreas) {
         this.schoolID = schoolID;
         this.schoolName = schoolName;
         this.schoolType = schoolType;
         this.grades = grades;
         this.address = address;
         this.location = location;
-        this.catchmentArea = catchmentArea;
+        this.catchmentAreas = catchmentAreas;
     }
 
     public int getSchoolID() {
@@ -48,8 +48,8 @@ public class PublicSchool {
         return location;
     }
 
-    public List<Point> getCatchmentArea() {
-        return catchmentArea;
+    public List<List<Point>> getCatchmentAreas() {
+        return catchmentAreas;
     }
 
     @Override
@@ -73,7 +73,7 @@ public class PublicSchool {
                 ", grades=" + grades +
                 ", address=" + address +
                 ", location=" + location +
-                ", catchmentArea=" + catchmentArea +
+                ", catchmentAreas=" + catchmentAreas +
                 '}';
     }
 }
