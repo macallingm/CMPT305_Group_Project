@@ -161,7 +161,7 @@ public class DemoMapApp extends Application {
             
             if (!overlappingPolygons.isEmpty()) {
                 // show popup with information for all overlapping polygons
-                showOverlappingPolygonsPopup(overlappingPolygons, event.getScreenX(), event.getScreenY());
+                showOverlappingPolygonsPopup(overlappingPolygons);
             }
         });
     }
@@ -231,7 +231,7 @@ public class DemoMapApp extends Application {
     }
     
     // show popup with info for overlapping polys
-    private void showOverlappingPolygonsPopup(List<DrawPolygon> overlappingPolygons, double screenX, double screenY) {
+    private void showOverlappingPolygonsPopup(List<DrawPolygon> overlappingPolygons) {
         if (catchmentStatsPopup != null) {
             catchmentStatsPopup.hide();
         }
@@ -240,7 +240,7 @@ public class DemoMapApp extends Application {
         catchmentStatsPopup.setAutoHide(true);
         
         VBox popupContent = new VBox(10);
-        popupContent.setPadding(new Insets(20, 25, 20, 25));
+        popupContent.setPadding(new Insets(10, 10, 20, 25));
         popupContent.setStyle("" +
                 "-fx-background-color: white; " +
                 "-fx-background-radius: 10; " +
@@ -251,11 +251,48 @@ public class DemoMapApp extends Application {
         popupContent.setMaxWidth(500);
         popupContent.setMaxHeight(600);
         
-        // title
+        // title bar with close button
+        StackPane titleBarContainer = new StackPane();
+        titleBarContainer.setPrefHeight(40);
+        titleBarContainer.setMinHeight(40);
+        
+        // title label
         Label titleLabel = new Label("Overlapping Catchment Zones");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
         titleLabel.setTextFill(Color.web("#1a5490"));
-        popupContent.getChildren().add(titleLabel);
+        StackPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
+        StackPane.setMargin(titleLabel, new Insets(0, 0, 0, 0));
+        titleBarContainer.getChildren().add(titleLabel);
+
+        //close button
+        Button closeButton = new Button("×");
+        closeButton.setStyle("-fx-background-color: transparent;");
+        closeButton.setTextFill(Color.web("#666666"));
+        closeButton.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        closeButton.setCursor(Cursor.HAND);
+        closeButton.setPadding(new Insets(2, 8, 2, 8));
+        closeButton.setMinSize(30, 30);
+        closeButton.setOnMouseEntered(event -> {
+            closeButton.setStyle("-fx-background-color: #f0f0f0;");
+            closeButton.setTextFill(Color.web("#333333"));
+        });
+        closeButton.setOnMouseExited(event -> {
+            closeButton.setStyle("-fx-background-color: transparent;");
+            closeButton.setTextFill(Color.web("#666666"));
+        });
+        closeButton.setOnAction(event -> {
+            if (catchmentStatsPopup != null) {
+                catchmentStatsPopup.hide();
+            }
+            if (detailedStatsPopup != null) {
+                detailedStatsPopup.hide();
+            }
+        });
+        StackPane.setAlignment(closeButton, Pos.TOP_RIGHT);
+        StackPane.setMargin(closeButton, new Insets(0, 0, 0, 0));
+        titleBarContainer.getChildren().add(closeButton);
+        
+        popupContent.getChildren().add(titleBarContainer);
 
         
         Separator separator1 = new Separator();
@@ -284,7 +321,14 @@ public class DemoMapApp extends Application {
         popupContent.getChildren().add(scrollPane);
         
         catchmentStatsPopup.getContent().add(popupContent);
-        catchmentStatsPopup.show(mapView.getScene().getWindow(), screenX - 250, screenY - 300);
+
+        double sceneWidth = mapView.getScene().getWidth();
+        double sceneHeight = mapView.getScene().getHeight();
+        double popupWidth = 500;
+        double popupHeight = 600;
+        double xPos = (sceneWidth - popupWidth) / 2;
+        double yPos = (sceneHeight - popupHeight) / 2;
+        catchmentStatsPopup.show(mapView.getScene().getWindow(), xPos, yPos);
     }
     
     // create box for one polygon
@@ -449,7 +493,15 @@ public class DemoMapApp extends Application {
         popupContent.getChildren().add(countLabel);
         
         detailedStatsPopup.getContent().add(popupContent);
-        detailedStatsPopup.show(mapView.getScene().getWindow(), screenX - 250, screenY - 350);
+
+        double sceneWidth = mapView.getScene().getWidth();
+        double sceneHeight = mapView.getScene().getHeight();
+        double popupWidth = 500;
+        double PopupHeight = 200;
+        double offset = 10;
+        double xPos = sceneWidth - popupWidth - offset;
+        double yPos = (sceneHeight - PopupHeight) / 2;
+        detailedStatsPopup.show(mapView.getScene().getWindow(), xPos, yPos);
     }
     
     // get residential properties within a polygon
