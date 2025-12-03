@@ -895,9 +895,11 @@ public class DemoMapApp extends Application {
                 for (PublicSchool school : publicSchools.getBySchoolType(abbrevType)) {
                     if (school.getCatchmentAreas() != null && !school.getCatchmentAreas().isEmpty()) {
                         for (List<Point> pointList : school.getCatchmentAreas()) {
-                            DrawPolygon polygon = new DrawPolygon(polyGraphic, pointList, abbrevType);
-                            polygons.add(polygon);
-                            polygonToSchoolMap.put(polygon, school);
+                            if (pointList != null && !pointList.isEmpty()) {
+                                DrawPolygon polygon = new DrawPolygon(polyGraphic, pointList, abbrevType);
+                                polygons.add(polygon);
+                                polygonToSchoolMap.put(polygon, school);
+                            }
                         }
                     }
                 }
