@@ -19,6 +19,8 @@ public class PublicSchools {
     public PublicSchools(String filename) throws IOException {
         List<PublicSchool> publicSchools = new ArrayList<>();
 
+//        int countNewSchools = 0;
+
         try (BufferedReader reader = Files.newBufferedReader(Path.of(filename))) {
             reader.readLine();
 
@@ -29,30 +31,53 @@ public class PublicSchools {
 
                 Point location = new Point(Double.parseDouble(values[14]), Double.parseDouble(values[15]));
 
-                List<Point> catchmentArea = new ArrayList<>();
+                List<List<Point>> catchmentAreas = new ArrayList<>();
+                catchmentAreas.add(new ArrayList<>()); // initialize first inner list for points
                 Point catchmentPoint = null;
+                int catchmentAreaCounter = 0;
 
                 if (!values[19].isEmpty()) {
                     // strip leading and trailing non-numeric characters and split on commas
                     String multipolygon = values[19].substring(16, values[19].length() - 3);
-                    String[] points = multipolygon.split(",");
+                    String[] polygonPoints = multipolygon.split(",");
 
-                    // some will be "43757))" and some will be "((3489..."
-                    for (String point : points) {
-                        String[] pointValues = point.stripLeading().split(" ");
-                        catchmentPoint = new Point(Double.parseDouble(pointValues[0]),
-                                Double.parseDouble(pointValues[1]));
-                        catchmentArea.add(catchmentPoint);
+                    for (String point : polygonPoints) {
+                        String[] singlePointPair = point.stripLeading().split(" ");
+
+                        // some last values will be "43757))" and some first values will be "((3489..."
+                        for (String pointValue : singlePointPair) {
+                            if (pointValue.contains(")")) {
+                                singlePointPair[1] = pointValue.substring(0, pointValue.indexOf(")"));
+                            }
+                            else if (pointValue.contains("(")) {
+                                singlePointPair[0] = pointValue.substring(2);
+                                // first value of new catchment area increments number of catchment area inner lists
+                                catchmentAreaCounter += 1;
+                                catchmentAreas.add(new ArrayList<>());
+                            }
+                        }
+
+                        catchmentPoint = new Point(Double.parseDouble(singlePointPair[0]),
+                                Double.parseDouble(singlePointPair[1]));
+                        catchmentAreas.get(catchmentAreaCounter).add(catchmentPoint);
                     }
                 }
 
+//                if (catchmentAreas.size() > 1) {
+//                    countNewSchools += 1;
+//                    System.out.println("Number of catchment areas: " + catchmentAreas.size());
+//                    System.out.println(catchmentAreas);
+//                }
+
                 PublicSchool school = new PublicSchool(Integer.parseInt(values[4]), values[5], values[6], values[7],
-                        values[8], location, catchmentArea);
+                        values[8], location, catchmentAreas);
 
                 publicSchools.add(school);
             }
 
             this.publicSchools = publicSchools;
+
+//            System.out.println("Number of new schools: " + countNewSchools);
         }
     }
 
