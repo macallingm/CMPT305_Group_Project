@@ -25,12 +25,13 @@ public class DrawPolygon{
 //    double yMaxBounds = Double.NEGATIVE_INFINITY;
 
 
-    public DrawPolygon( GraphicsOverlay graphicsOverlay, List<Point> pointList, String gradeLevel) {
+    public DrawPolygon(GraphicsOverlay graphicsOverlay, List<Point> pointList, String gradeLevel) {
         this.pointList = pointList;
         this.graphicsOverlay = graphicsOverlay;
         this.gradeLevel = gradeLevel;
         coordinateCollection = new PointCollection(SpatialReferences.getWgs84());
-        for  (Point point : pointList) {
+
+        for (Point point : pointList) {
             coordinateCollection.add(point);
 //            xMinBounds = Double.min(xMinBounds, point.getX());
 //            yMinBounds = Double.min(yMinBounds, point.getY());
@@ -39,32 +40,37 @@ public class DrawPolygon{
         }
 
         aPolygon = new Polygon(coordinateCollection);
-
         float borderWidth = 3.0F;
 
-
-        if(gradeLevel.equals("EL")){
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF8000",0.4),
-                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A35200",0.4), borderWidth));
-        } else if (gradeLevel.equals("EJ")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x00FF80",0.4),
-                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("00A352",0.4), borderWidth));
-        } else if (gradeLevel.equals("JR")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x0000FF",0.4),
-                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("0000A3",0.4), borderWidth));
-        } else if (gradeLevel.equals("JS")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF0000",0.4),
-                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A30000",0.4), borderWidth));
-        } else if (gradeLevel.equals("SR")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF007F",0.4),
-                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A30052",0.4), borderWidth));
-        } else if (gradeLevel.equals("EJS")) {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("8a00c2",0.4),
-                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("58007C",0.4), borderWidth));
-        }
-        else {
-            polygonFill =  new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("FFEA00",0.4),
-                    new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("CCBB00",0.4), borderWidth));
+        switch (gradeLevel) {
+            case "EL":
+                polygonFill = new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF8000", 0.4),
+                        new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A35200", 0.4), borderWidth));
+                break;
+            case "EJ":
+                polygonFill = new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x00FF80", 0.4),
+                        new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("00A352", 0.4), borderWidth));
+                break;
+            case "JR":
+                polygonFill = new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0x0000FF", 0.4),
+                        new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("0000A3", 0.4), borderWidth));
+                break;
+            case "JS":
+                polygonFill = new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF0000", 0.4),
+                        new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A30000", 0.4), borderWidth));
+                break;
+            case "SR":
+                polygonFill = new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF007F", 0.4),
+                        new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("A30052", 0.4), borderWidth));
+                break;
+            case "EJS":
+                polygonFill = new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("8a00c2", 0.4),
+                        new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("58007C", 0.4), borderWidth));
+                break;
+            default:
+                polygonFill = new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("FFEA00", 0.4),
+                        new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("CCBB00", 0.4), borderWidth));
+                break;
         }
         //See https://developers.arcgis.com/java/maps-2d/tutorials/add-a-point-line-and-polygon/
 
