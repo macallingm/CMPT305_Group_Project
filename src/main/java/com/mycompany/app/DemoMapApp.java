@@ -70,6 +70,7 @@ public class DemoMapApp extends Application {
     private List<String> activeFilters = new ArrayList<>();
     private Popup schoolInfoPopup;
     private Popup catchmentStatsPopup;
+    private Popup detailedStatsPopup;
     private PublicSchools  publicSchools = null;
     private PropertyAssessments propertyAssessments = null;
     private String filename= "Property_Assessment_Data_2025.csv";
@@ -297,6 +298,26 @@ public class DemoMapApp extends Application {
                 "-fx-border-radius: 8; " +
                 "-fx-border-width: 1;");
         
+        // Make the info box clickable to show detailed statistics
+        infoBox.setCursor(Cursor.HAND);
+        infoBox.setOnMouseClicked(event -> {
+            showDetailedCatchmentStats(school, polygon, event.getScreenX(), event.getScreenY());
+        });
+        
+        // Add hover effect
+        infoBox.setOnMouseEntered(e -> infoBox.setStyle("" +
+                "-fx-background-color: #f5f5f5; " +
+                "-fx-background-radius: 8; " +
+                "-fx-border-color: #1a5490; " +
+                "-fx-border-radius: 8; " +
+                "-fx-border-width: 2;"));
+        infoBox.setOnMouseExited(e -> infoBox.setStyle("" +
+                "-fx-background-color: white; " +
+                "-fx-background-radius: 8; " +
+                "-fx-border-color: #e0e0e0; " +
+                "-fx-border-radius: 8; " +
+                "-fx-border-width: 1;"));
+        
         // school name
         Label schoolNameLabel = new Label(school.getSchoolName());
         schoolNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
@@ -346,15 +367,109 @@ public class DemoMapApp extends Application {
             propsLabel.setTextFill(Color.web("#666666"));
             infoBox.getChildren().add(propsLabel);
 
-            // fill with actual stats, just placeholder for now
-            Label statsLabel = new Label("(Statistics available)");
+            // clickable
+            Label statsLabel = new Label("(Click for detailed statistics)");
             statsLabel.setFont(Font.font("Arial", 11));
-            statsLabel.setTextFill(Color.web("#999999"));
+            statsLabel.setTextFill(Color.web("#1a5490"));
+            statsLabel.setStyle("-fx-underline: true;");
             infoBox.getChildren().add(statsLabel);
         }
         
         return infoBox;
     }
+    
+    // show detailed statistics popup for a specific catchment zone
+    private void showDetailedCatchmentStats(PublicSchool school, DrawPolygon polygon, double screenX, double screenY) {
+        if (detailedStatsPopup != null) {
+            detailedStatsPopup.hide();
+        }
+        
+        if (propertyAssessments == null) {
+            return;
+        }
+        
+        // Get residential properties within this polygon
+        PropertyAssessments residentialProps = getResidentialPropertiesInPolygon(polygon);
+        
+        if (residentialProps.getSize() == 0) {
+            // Show message that no properties were found
+            Popup noDataPopup = new Popup();
+            noDataPopup.setAutoHide(true);
+            VBox noDataContent = new VBox(10);
+            noDataContent.setPadding(new Insets(20));
+            noDataContent.setStyle("" +
+                    "-fx-background-color: white; " +
+                    "-fx-background-radius: 10; " +
+                    "-fx-border-color: #cccccc; " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-border-width: 2; ");
+            Label noDataLabel = new Label("No residential properties found in this catchment zone.");
+            noDataLabel.setFont(Font.font("Arial", 12));
+            noDataContent.getChildren().add(noDataLabel);
+            noDataPopup.getContent().add(noDataContent);
+            noDataPopup.show(mapView.getScene().getWindow(), screenX - 150, screenY - 25);
+            return;
+        }
+        
+        detailedStatsPopup = new Popup();
+        detailedStatsPopup.setAutoHide(true);
+        
+        VBox popupContent = new VBox(15);
+        popupContent.setPadding(new Insets(20, 25, 20, 25));
+        popupContent.setStyle("" +
+                "-fx-background-color: white; " +
+                "-fx-background-radius: 10; " +
+                "-fx-border-color: #cccccc; " +
+                "-fx-border-radius: 10; " +
+                "-fx-border-width: 2; ");
+        popupContent.setPrefWidth(500);
+        popupContent.setMaxWidth(500);
+        popupContent.setMaxHeight(700);
+        
+        // title
+        Label titleLabel = new Label("Catchment Zone Statistics");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        titleLabel.setTextFill(Color.web("#1a5490"));
+        popupContent.getChildren().add(titleLabel);
+        
+        // school name
+        Label schoolNameLabel = new Label(school.getSchoolName());
+        schoolNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        schoolNameLabel.setTextFill(Color.web("#333333"));
+        schoolNameLabel.setWrapText(true);
+        popupContent.getChildren().add(schoolNameLabel);
+        
+        Separator separator1 = new Separator();
+        popupContent.getChildren().add(separator1);
+        
+        // property count
+        Label countLabel = new Label("Residential Properties: " + residentialProps.getSize());
+        countLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        countLabel.setTextFill(Color.web("#666666"));
+        popupContent.getChildren().add(countLabel);
+        
+        detailedStatsPopup.getContent().add(popupContent);
+        detailedStatsPopup.show(mapView.getScene().getWindow(), screenX - 250, screenY - 350);
+    }
+    
+    // get residential properties within a polygon
+    private PropertyAssessments getResidentialPropertiesInPolygon(DrawPolygon polygon) {
+        List<PropertyAssessment> propertiesInPolygon = new ArrayList<>();
+        
+
+        PropertyAssessments residentialProps = propertyAssessments.getResidentialProperties();
+        
+
+        for (PropertyAssessment property : residentialProps.getPropertyAssessments()) {
+            Location loc = property.getLocation();
+            if (loc != null && polygon.inPolygon(loc.getLongitude(), loc.getLatitude())) {
+                propertiesInPolygon.add(property);
+            }
+        }
+        
+        return new PropertyAssessments(propertiesInPolygon);
+    }
+
 
     // show popup with school information on hover
     private void showSchoolInfoPopup(PublicSchool school, double screenX, double screenY) {
