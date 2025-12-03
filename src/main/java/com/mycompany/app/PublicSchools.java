@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.esri.arcgisruntime.geometry.Point;
+import com.esri.arcgisruntime.geometry.SpatialReferences;
 
 // Method parseCSVLine copied from Philip Mees' post
 
@@ -58,7 +59,7 @@ public class PublicSchools {
                         }
 
                         catchmentPoint = new Point(Double.parseDouble(singlePointPair[0]),
-                                Double.parseDouble(singlePointPair[1]));
+                                Double.parseDouble(singlePointPair[1]), SpatialReferences.getWgs84());
                         catchmentAreas.get(catchmentAreaCounter).add(catchmentPoint);
                     }
                 }
