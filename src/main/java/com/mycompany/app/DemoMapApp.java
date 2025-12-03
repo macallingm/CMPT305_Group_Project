@@ -44,8 +44,10 @@ import com.esri.arcgisruntime.geometry.SpatialReferences;
 import com.esri.arcgisruntime.mapping.view.Graphic;
 import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol;
 
+import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -443,10 +445,16 @@ public class DemoMapApp extends Application {
         popupContent.getChildren().add(separator1);
         
         // property count
-        Label countLabel = new Label("Residential Properties: " + residentialProps.getSize());
-        countLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        countLabel.setTextFill(Color.web("#666666"));
+        Label countLabel = createStatLabel("Number of Residential Properties: ",residentialProps.getSize());
+        Label minLabel = createStatLabel("Minimum Assessed Value: $", residentialProps.getMinAssessedValue());
+        Label maxLabel = createStatLabel("Maximum Assessed Value: $", residentialProps.getMaxAssessedValue());
+        Label meanLabel = createStatLabel("Mean Assessed Value: $", residentialProps.getMeanAssessedValue());
+        Label medianLabel = createStatLabel("Median Assessed Value: $", residentialProps.getMedianAssessedValue());
         popupContent.getChildren().add(countLabel);
+        popupContent.getChildren().add(minLabel);
+        popupContent.getChildren().add(maxLabel);
+        popupContent.getChildren().add(meanLabel);
+        popupContent.getChildren().add(medianLabel);
         
         detailedStatsPopup.getContent().add(popupContent);
         detailedStatsPopup.show(mapView.getScene().getWindow(), screenX - 250, screenY - 350);
@@ -995,6 +1003,17 @@ public class DemoMapApp extends Application {
         topBar.getChildren().add(mapTitle);
         return topBar;
     }
+
+    private static Label createStatLabel(String text, long value) {
+        NumberFormatter formatter = new NumberFormatter();
+        NumberFormat numberFormat = NumberFormat.getInstance();
+        String formatted = numberFormat.format(value);
+        Label label = new Label(text + formatted);
+        label.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        label.setTextFill(Color.web("#666666"));
+        return label;
+    }
+
 }
 
 
