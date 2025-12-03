@@ -779,9 +779,11 @@ public class DemoMapApp extends Application {
             if (!filterAlreadyApplied) {
                 for (PublicSchool school : publicSchools.getBySchoolType(abbrevType)) {
                     if (school.getCatchmentAreas() != null && !school.getCatchmentAreas().isEmpty()) {
-                        DrawPolygon polygon = new DrawPolygon(polyGraphic, school.getCatchmentAreas(), abbrevType);
-                        polygons.add(polygon);
-                        polygonToSchoolMap.put(polygon, school);
+                        for (List<Point> pointList : school.getCatchmentAreas()) {
+                            DrawPolygon polygon = new DrawPolygon(polyGraphic, pointList, abbrevType);
+                            polygons.add(polygon);
+                            polygonToSchoolMap.put(polygon, school);
+                        }
                     }
                 }
             }
