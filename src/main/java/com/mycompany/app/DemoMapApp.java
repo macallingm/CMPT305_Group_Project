@@ -488,7 +488,7 @@ public class DemoMapApp extends Application {
         Separator separator1 = new Separator();
         popupContent.getChildren().add(separator1);
         
-        // property count
+
         Label countLabel = createStatLabel("Number of Residential Properties: ",residentialProps.getSize());
         Label minLabel = createStatLabel("Minimum Assessed Value: $", residentialProps.getMinAssessedValue());
         Label maxLabel = createStatLabel("Maximum Assessed Value: $", residentialProps.getMaxAssessedValue());
