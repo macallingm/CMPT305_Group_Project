@@ -6,7 +6,7 @@ DATE: Dec 07, 2025
 APP NAME: Edmonton School Catchment Zones
 REQUIRED FILES:
     Property_Assessment_Data_2025.csv
-    Edmonton_Public_School_Board_2025_Small.csv
+    Edmonton_Public_School_Board_2025.csv
 
 DESCRIPTION: This application allows the user to display Edmonton Public School catchment zones, based on school type
 (example: JS - Gr 7-12 , EJS - K to Gr 12), and identify the boundary of each catchment zone on top of a map
