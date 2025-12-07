@@ -7,7 +7,6 @@ import com.esri.arcgisruntime.symbology.SimpleFillSymbol;
 import com.esri.arcgisruntime.symbology.SimpleLineSymbol;
 import javafx.scene.paint.Color;
 import java.util.List;
-//import com.esri.arcgisruntime.geometry.GeometryEngine;
 
 
 public class DrawPolygon{
@@ -19,12 +18,8 @@ public class DrawPolygon{
     Graphic polygonGraphic;
     List<Point> pointList;
     String gradeLevel;
-//    double xMinBounds = Double.POSITIVE_INFINITY;
-//    double yMinBounds = Double.POSITIVE_INFINITY;
-//    double xMaxBounds = Double.NEGATIVE_INFINITY;
-//    double yMaxBounds = Double.NEGATIVE_INFINITY;
 
-
+    // Takes a point list from the Edmonton public school dataset and converts it into a polygon.
     public DrawPolygon(GraphicsOverlay graphicsOverlay, List<Point> pointList, String gradeLevel) {
         this.pointList = pointList;
         this.graphicsOverlay = graphicsOverlay;
@@ -33,15 +28,12 @@ public class DrawPolygon{
 
         for (Point point : pointList) {
             coordinateCollection.add(point);
-//            xMinBounds = Double.min(xMinBounds, point.getX());
-//            yMinBounds = Double.min(yMinBounds, point.getY());
-//            xMaxBounds = Double.max(xMaxBounds, point.getX());
-//            yMaxBounds = Double.max(yMaxBounds, point.getY());
         }
 
         aPolygon = new Polygon(coordinateCollection);
         float borderWidth = 3.0F;
 
+        // Based on the school type the polygon will have a different color.
         switch (gradeLevel) {
             case "EL":
                 polygonFill = new SimpleFillSymbol(SimpleFillSymbol.Style.SOLID, Color.web("0xFF8000", 0.4),
@@ -72,36 +64,19 @@ public class DrawPolygon{
                         new SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.web("CCBB00", 0.4), borderWidth));
                 break;
         }
-        //See https://developers.arcgis.com/java/maps-2d/tutorials/add-a-point-line-and-polygon/
 
         polygonGraphic = new Graphic(aPolygon, polygonFill);
         graphicsOverlay.getGraphics().add(polygonGraphic);
 
     }
-//
-//    public boolean inBoundingBox(Point point){
-//        return (((point.getX()) >= xMinBounds && (point.getX()) <= xMaxBounds) &&  (point.getY() >= yMinBounds && point.getY() <= yMaxBounds));
-//
-//    }
 
+    // Logic that determines if a click or object is within a polygon or another object.
     public boolean inPolygon(double xp, double yp){
-//        Point aPoint = new Point(xp,yp);
-//        if (!inBoundingBox(aPoint)){
-//            return false;
-//        }
-//        int count = 0;
-//        for (int i = 0; i < (coordinateCollection.size() - 1); i++){
-//            if(((yp < coordinateCollection.get(i).getY()) != (yp < coordinateCollection.get(i+1).getY()))
-//            && (xp < (coordinateCollection.get(i).getX() + (((yp - coordinateCollection.get(i).getY())/(coordinateCollection.get(i+1).getY() - coordinateCollection.get(i).getY())) * (coordinateCollection.get(i+1).getX()- coordinateCollection.get(i).getX()))))){
-//                count++;
-//            }
-//        }
-//        return (count%2 == 1);
-
         Point aPoint = new Point(xp,yp, SpatialReferences.getWgs84());
         return GeometryEngine.contains(aPolygon, aPoint);
     }
 
+    // Used with filtering to remove polygons when the filtering is turned off.
     public void removeGraphic(){
         graphicsOverlay.getGraphics().remove(polygonGraphic);
     }

@@ -4,22 +4,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class CatchmentProperties {
-    PropertyAssessments propertyAssessments;
-    DrawPolygon polygon;
-    Set<Neighborhood> neighborhoods =  new HashSet<Neighborhood>();
 
+    // Making this private to prevent instantiation.
+    private CatchmentProperties() {}
 
-
-    public CatchmentProperties(PropertyAssessments properties, DrawPolygon polygon) {
-        this.propertyAssessments = properties.getResidentialProperties();
-        this.polygon = polygon;
-    }
-
-    public void getCatchmentProperties() {
-        propertyAssessments.getPropertyAssessments().stream()
-                .filter(p -> polygon.inPolygon(p.getLocation().getLongitude(), p.getLocation().getLatitude()))
-                .forEach(p -> neighborhoods.add(p.getNeighborhood()));
-        System.out.println(neighborhoods);
+    public static PropertyAssessments getPolygonProperties(PropertyAssessments properties, DrawPolygon polygon) {
+        List<PropertyAssessment> residentialAssessments = properties.getResidentialProperties().getPropertyAssessments().stream()
+                .filter(p -> (polygon.inPolygon(p.getLocation().getLongitude(), p.getLocation().getLatitude())))
+                .collect(Collectors.toList());
+        return new PropertyAssessments(residentialAssessments);
     }
 }
 

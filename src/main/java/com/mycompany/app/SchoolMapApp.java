@@ -45,7 +45,6 @@ import com.esri.arcgisruntime.mapping.view.Graphic;
 import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol;
 
 import javax.swing.text.NumberFormatter;
-import java.awt.*;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -55,7 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class DemoMapApp extends Application {
+public class SchoolMapApp extends Application {
 
     private MapView mapView;
     private TextField searchField;
@@ -402,8 +401,6 @@ public class DemoMapApp extends Application {
         
         // catchment properties
         if (propertyAssessments != null) {
-            CatchmentProperties props = new CatchmentProperties(propertyAssessments, polygon);
-            props.getCatchmentProperties();
             
             Separator propsSeparator = new Separator();
             infoBox.getChildren().add(propsSeparator);
@@ -434,8 +431,8 @@ public class DemoMapApp extends Application {
             return;
         }
         
-        // Get residential properties within this polygon
-        PropertyAssessments residentialProps = getResidentialPropertiesInPolygon(polygon);
+        // Capturing the residential properties within the polygon
+        PropertyAssessments residentialProps = CatchmentProperties.getPolygonProperties(propertyAssessments, polygon);
         
         if (residentialProps.getSize() == 0) {
             // Show message that no properties were found
@@ -510,24 +507,6 @@ public class DemoMapApp extends Application {
         double xPos = sceneWidth - popupWidth - offset;
         double yPos = (sceneHeight - PopupHeight) / 2;
         detailedStatsPopup.show(mapView.getScene().getWindow(), xPos, yPos);
-    }
-    
-    // get residential properties within a polygon
-    private PropertyAssessments getResidentialPropertiesInPolygon(DrawPolygon polygon) {
-        List<PropertyAssessment> propertiesInPolygon = new ArrayList<>();
-        
-
-        PropertyAssessments residentialProps = propertyAssessments.getResidentialProperties();
-        
-
-        for (PropertyAssessment property : residentialProps.getPropertyAssessments()) {
-            Location loc = property.getLocation();
-            if (loc != null && polygon.inPolygon(loc.getLongitude(), loc.getLatitude())) {
-                propertiesInPolygon.add(property);
-            }
-        }
-        
-        return new PropertyAssessments(propertiesInPolygon);
     }
 
 
@@ -634,61 +613,17 @@ public class DemoMapApp extends Application {
         leftPanelVBox.setPrefWidth(250);
         leftPanelVBox.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
 
-        // for the search bar
-        searchField = new TextField();
-        searchField.setPromptText("Search");
-        searchField.setPrefWidth(250);
-        searchField.setPrefHeight(40);
-        searchField.setPadding(new Insets(5, 5, 5, 30));
-        searchField.setStyle("" +
-                "-fx-background-color: white; " +
-                "-fx-background-radius: 5; " +
-                "-fx-border-color: #cccccc; " +
-                "-fx-border-radius: 5;");
-
-        // search icon inside search bar
-        StackPane searchContainer = new StackPane();
-        searchContainer.setPrefWidth(250);
-        Label searchIcon = new Label("🔍");
-        searchIcon.setFont(Font.font(16));
-        searchIcon.setMouseTransparent(true);
-        StackPane.setAlignment(searchIcon, Pos.CENTER_LEFT);
-        StackPane.setMargin(searchIcon, new Insets(0, 0, 0, 10));
-        searchContainer.getChildren().addAll(searchField, searchIcon);
-
-        setupSearchField();
 
         // filter button for school type
         schoolTypeBtn = createFilterButton("School Type");
 
         setupSchoolTypeFilter(schoolTypeBtn);
 
-        leftPanelVBox.getChildren().addAll(searchContainer, schoolTypeBtn);
+        leftPanelVBox.getChildren().addAll(schoolTypeBtn);
 
         leftPanelVBox.setPadding(new Insets(10));
 
         return leftPanelVBox;
-    }
-    
-    private void setupSearchField() {
-        searchField.textProperty().addListener((textObservable, previousTextValue, currentTextValue) -> {
-            if (!currentTextValue.isEmpty() && currentTextValue.length() >= 3) {
-                showSearchFillSuggestions(currentTextValue);
-            }
-        });
-        
-        // handling search when user presses Enter on keyboard
-        searchField.setOnAction(searchActionEvent -> {
-            String searchQuery = searchField.getText();
-            if (!searchQuery.isEmpty()) {
-                performSearch(searchQuery);
-            }
-        });
-    }
-
-    // search suggestions
-    private void showSearchFillSuggestions(String searchFillQuery) {
-        // backend to fetch search suggestions (if possible)
     }
 
     // filter button
@@ -903,14 +838,12 @@ public class DemoMapApp extends Application {
         parentVBox.getChildren().add(filterButtonIndex + 1, filterTagPane);
     }
 
-
-    // backend fetching for user actions
     
     // searching
     private void performSearch(String searchQuery) {
     }
     
-    // filter
+    // filtering
     private void applyFilterToBackend(PublicSchools publicSchools, String schoolType, GraphicsOverlay polyGraphic, List<DrawPolygon> polygons) {
         String abbrevType = "";
 
@@ -1021,12 +954,8 @@ public class DemoMapApp extends Application {
             }
             polygons.removeAll(polygonsToRemove);
 
-            
-            // hide school pts for this filter type
-
 
             // hide school pts
-
             for (Map.Entry<Graphic, String> entry : graphicToSchoolTypeMap.entrySet()) {
                 if (entry.getValue().equals(abbrevType)) {
                     entry.getKey().setVisible(false);
@@ -1040,11 +969,11 @@ public class DemoMapApp extends Application {
         }
     }
 
+    // This creates the Topbar of the app with the title.
     private HBox createTopBar() {
         Label mapTitle = new Label("Edmonton School Catchment Zones");
         mapTitle.setFont(Font.font("Arial", FontWeight.EXTRA_BOLD, 48));
         mapTitle.setTextFill(Color.WHITE);
-//        mapTitle.setMouseTransparent(true);
 
         HBox topBar = new HBox();
         topBar.setPadding(new Insets(15));
@@ -1056,6 +985,7 @@ public class DemoMapApp extends Application {
         return topBar;
     }
 
+    // This helps create the labels for the property statistics
     private static Label createStatLabel(String text, long value) {
         NumberFormatter formatter = new NumberFormatter();
         NumberFormat numberFormat = NumberFormat.getInstance();
